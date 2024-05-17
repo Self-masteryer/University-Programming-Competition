@@ -6,6 +6,7 @@ import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Time;
 import com.lcx.common.exception.StartTimeException;
 import com.lcx.mapper.ContestantMapper;
+import com.lcx.mapper.DistrictScoreMapper;
 import com.lcx.mapper.UserInfoMapper;
 import com.lcx.pojo.Entity.Contestant;
 import com.lcx.pojo.Entity.DistrictScore;
@@ -30,6 +31,8 @@ public class HostServiceImpl implements HostService {
     private UserInfoMapper userInfoMapper;
     @Resource
     private ContestantMapper contestantMapper;
+    @Resource
+    private DistrictScoreMapper districtScoreMapper;
 
     //开启比赛,并抽签
     @Override
@@ -59,8 +62,10 @@ public class HostServiceImpl implements HostService {
         for(int i=0;i<count;i++) {
             Contestant contestant = list.get(i);
             DistrictScore districtScore = DistrictScore.builder().uid(contestant.getUid()).build();
-            String seatNum = group+zone+nums.get(i);
+            String seatNum = group+ ":" +zone+ ":" +nums.get(i);
             districtScore.setSeatNum(seatNum);
+
+            districtScoreMapper.insert(districtScore);
         }
     }
 }
