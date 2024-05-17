@@ -2,12 +2,11 @@ package com.lcx.service.Impl;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.lcx.mapper.PermissionMapper;
-import com.lcx.mapper.UserMapper;
-import com.lcx.pojo.Entity.User;
+import com.lcx.mapper.RoleMapper;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 /**
@@ -19,16 +18,14 @@ public class StpInterfaceImpl implements StpInterface {
     @Resource
     private PermissionMapper permissionMapper;
     @Resource
-    private UserMapper userMapper;
+    private RoleMapper roleMapper;
 
     /**
      * 返回一个账号所拥有的权限码集合
      */
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
-        User user = userMapper.getById((int)loginId);
-        int role=user.getRid();
-        return permissionMapper.get(role);
+        return permissionMapper.list(loginId);
     }
 
     /**
@@ -36,11 +33,7 @@ public class StpInterfaceImpl implements StpInterface {
      */
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
-        // 本 list 仅做模拟，实际项目中要根据具体业务逻辑来查询角色
-        List<String> list = new ArrayList<String>();
-        list.add("admin");
-        list.add("super-admin");
-        return list;
+        return roleMapper.list(loginId);
     }
 
 }

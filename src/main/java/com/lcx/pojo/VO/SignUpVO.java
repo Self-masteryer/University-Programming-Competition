@@ -1,6 +1,5 @@
-package com.lcx.pojo.DTO;
+package com.lcx.pojo.VO;
 
-import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,11 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserLoginDTO {
+public class SignUpVO {
 
-    @NotEmpty
+    private String name;
     private String username;
-    @NotEmpty
     private String password;
 
 }

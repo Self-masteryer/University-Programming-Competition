@@ -9,14 +9,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserInfo {
+public class Contestant {
 
     private int id;
     private int uid;
+    private int sid;
     private String name;
     private String idCard;
     private String group;
     private String zone;
-    private int role;
 
 }

@@ -10,11 +10,13 @@ public interface UserMapper {
     @Select("select * from user where username=#{username}")
     User getByUsername(String username);
 
-    int insertUser(User user);
+    void insert(User user);
 
     @Update("update user set enabled=1 where id=#{uid}")
     void enable(int uid);
 
     @Select("select * from user where id=#{id}")
     User getById(int id);
+
+    void update(User user);
 }
