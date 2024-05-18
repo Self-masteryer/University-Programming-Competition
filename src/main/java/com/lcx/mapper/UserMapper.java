@@ -19,4 +19,7 @@ public interface UserMapper {
     User getById(int id);
 
     void update(User user);
+
+    @Update("update user set rid=#{rid} where id=#{id}")
+    void updateRole(int id, int rid);
 }

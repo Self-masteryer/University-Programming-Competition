@@ -1,6 +1,7 @@
 package com.lcx.mapper;
 
 import com.lcx.pojo.Entity.Contestant;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -24,4 +25,8 @@ public interface ContestantMapper {
 
     @Select("select * from contestant where `group`=#{group} and zone=#{zone}")
     List<Contestant> getListByGroupAndZone(String group, String zone);
+
+    @Delete("delete from contestant where uid=#{uid}")
+    void deleteByUid(int uid);
+
 }

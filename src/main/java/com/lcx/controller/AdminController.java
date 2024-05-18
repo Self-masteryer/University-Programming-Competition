@@ -13,8 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/admin")
-@Slf4j
 @SaCheckRole("admin")
+@Slf4j
 public class AdminController {
 
     @Resource

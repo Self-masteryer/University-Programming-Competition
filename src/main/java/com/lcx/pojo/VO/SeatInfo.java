@@ -1,4 +1,4 @@
-package com.lcx.pojo.Entity;
+package com.lcx.pojo.VO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,13 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserInfo {
+public class SeatInfo {
 
-    private int id;
-    private int uid;
     private String name;
-    private String idCard;
-    private String group;
-    private String zone;
+
+    private String seatNum;
 
 }

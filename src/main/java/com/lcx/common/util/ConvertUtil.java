@@ -1,5 +1,6 @@
 package com.lcx.common.util;
 
+import com.lcx.common.constant.Group;
 import com.lcx.common.constant.SheetName;
 import com.lcx.common.constant.Zone;
 
@@ -29,6 +30,22 @@ public class ConvertUtil {
             case Zone.CENTRAL -> "C";
             case Zone.EAST -> "E";
             case Zone.NATIONAL -> "N";
+            default -> "";
+        };
+    }
+
+    public static String parseGroupSimStr(String group) {
+        return switch (group) {
+            case Group.BK -> "BK";
+            case Group.GZ -> "GZ";
+            default -> "";
+        };
+    }
+
+    public static String parseGroupStr(String group) {
+        return switch (group) {
+            case "BK" -> Group.BK;
+            case "GZ" -> Group.GZ;
             default -> "";
         };
     }

@@ -1,6 +1,6 @@
-package com.lcx.common.exception;
+package com.lcx.common.exception.time;
 
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers;
+import com.lcx.common.exception.BaseException;
 
 public class SignUpTimeErrorException extends BaseException {
     public SignUpTimeErrorException() {

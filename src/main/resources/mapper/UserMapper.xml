@@ -4,7 +4,7 @@
 <mapper namespace="com.lcx.mapper.UserMapper">
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        insert into user (username, password, name, rid, enabled)
+        insert into user (username, password, nickname, rid, enabled)
         values (#{username},#{password},#{name},#{rid},#{enabled})
     </insert>
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.lcx.mapper.DistrictScoreMapper">
+
+    <select id="getVOListByGroupAndZone" resultType="com.lcx.pojo.VO.DistrictScoreVO">
+        select c.name,c.`group`,c.zone,ds.seat_num,ds.sign_num,
+               ds.written_score,ds.practical_score,ds.response_score,ds.final_score
+        from district_score ds left outer join contestant c on c.uid=ds.uid
+        where c.`group`=#{group} and c.zone=#{zone};
+    </select>
+
+</mapper>

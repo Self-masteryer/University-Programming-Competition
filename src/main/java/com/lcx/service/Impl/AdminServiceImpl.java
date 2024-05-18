@@ -21,6 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class AdminServiceImpl implements AdminService {
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
+    @Transactional
     public void createUserByExcel(MultipartFile file, HttpServletResponse response) {
         try {
             InputStream in = file.getInputStream();
@@ -56,7 +58,7 @@ public class AdminServiceImpl implements AdminService {
                 outRow1.createCell(1).setCellValue("用户名");
                 outRow1.createCell(2).setCellValue("密码");
 
-                int role = ConvertUtil.parseRoleNum(r);
+                int rid = ConvertUtil.parseRoleNum(r);
                 for (int j = 1; j <= inSheet.getLastRowNum(); j++) {
                     XSSFRow inRow = inSheet.getRow(j);
                     XSSFRow outRow = outSheet.createRow(j);
@@ -67,9 +69,8 @@ public class AdminServiceImpl implements AdminService {
                         //身份信息表
                         userInfo = new UserInfo();
                         userInfo.setIdCard(IDCard);//身份证
-                        userInfo.setRole(role);//角色
                         userInfo.setName(inRow.getCell(0).getStringCellValue());//姓名
-                        userInfo.setGroup(inRow.getCell(2).getStringCellValue());//组别
+                        userInfo.setGroup(ConvertUtil.parseGroupSimStr(inRow.getCell(2).getStringCellValue()));//组别
                         userInfo.setZone(ConvertUtil.parseZoneSimStr(inRow.getCell(3).getStringCellValue()));//赛区
                         //用户
                         User user = new User();
@@ -77,7 +78,7 @@ public class AdminServiceImpl implements AdminService {
                         String password = RandomStringUtils.length(8);
                         user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
                         user.setName(userInfo.getName());
-                        user.setRid(role);
+                        user.setRid(rid);
                         user.setEnabled(1);
                         userMapper.insert(user);
 
@@ -91,8 +92,7 @@ public class AdminServiceImpl implements AdminService {
                     } else {
                         //账号存在，更新身份信息
                         userInfo.setZone(ConvertUtil.parseZoneSimStr(inRow.getCell(3).getStringCellValue()));
-                        userInfo.setGroup(inRow.getCell(2).getStringCellValue());
-                        userInfo.setRole(role);
+                        userInfo.setGroup(ConvertUtil.parseGroupSimStr(inRow.getCell(2).getStringCellValue()));
                         userInfoMapper.update(userInfo);
                         //更新用户信息
                         User user = userMapper.getById(userInfo.getUid());
@@ -128,6 +128,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void createSchoolByExcel(MultipartFile file, HttpServletResponse response) {
         try {
             InputStream in = file.getInputStream();
@@ -151,7 +152,7 @@ public class AdminServiceImpl implements AdminService {
                 School school = new School();
                 school.setName(inRow.getCell(0).getStringCellValue());
                 school.setNum(0);
-                school.setGroup(inRow.getCell(1).getStringCellValue());//组别
+                school.setGroup(ConvertUtil.parseGroupSimStr(inRow.getCell(1).getStringCellValue()));//组别
                 school.setZone(ConvertUtil.parseZoneSimStr(inRow.getCell(2).getStringCellValue()));//赛区
                 //用户
                 User user = new User();
@@ -196,5 +197,9 @@ public class AdminServiceImpl implements AdminService {
         String end = ConvertUtil.parseDateStr(signUpTime.getEnd());
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_BEGIN_TIME, begin);
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_END_TIME, end);
+    }
+
+    public void setToTourist(){
+
     }
 }

@@ -10,8 +10,8 @@ public interface UserInfoMapper {
     @Select("select * from user_info where id_card=#{idCard}")
     UserInfo getByIDCard(String idCard);
 
-    @Insert("insert into user_info (uid, name, id_card, `group`, zone, role) " +
-            "value (#{uid},#{name},#{idCard},#{group},#{zone},#{role})")
+    @Insert("insert into user_info (uid, name, id_card, `group`, zone) " +
+            "value (#{uid},#{name},#{idCard},#{group},#{zone})")
     void insert(UserInfo userInfo);
 
     void update(UserInfo userInfo);
