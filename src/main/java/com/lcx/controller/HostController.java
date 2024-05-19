@@ -2,6 +2,8 @@ package com.lcx.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.annotation.SaMode;
+import com.lcx.annotation.CheckProcess;
+import com.lcx.common.enumeration.Process;
 import com.lcx.common.result.Result;
 import com.lcx.pojo.VO.DistrictScoreVO;
 import com.lcx.pojo.VO.SeatInfo;
@@ -39,6 +41,7 @@ public class HostController {
 
     // 通过excel上传笔试成绩
     @PostMapping("/postWrittenScoreByExcel")
+    @CheckProcess(Process.WRITTEN)
     public Result postWrittenScoreByExcel(@RequestParam("file") MultipartFile file) {
         hostService.postWrittenScoreByExcel(file);
         return Result.success("成绩上传成功");
@@ -46,6 +49,7 @@ public class HostController {
 
     // 座位号抽签
     @GetMapping("/seatDraw")
+    @CheckProcess(Process.WRITTEN)
     public Result<List<SeatInfo>> seatDraw() {
         List<SeatInfo> seatTable = hostService.seatDraw();
         return Result.success(seatTable);
@@ -53,6 +57,7 @@ public class HostController {
 
     // 按笔试成绩筛选
     @GetMapping("/scoreFilter")
+    @CheckProcess(Process.WRITTEN)
     public Result<List<DistrictScoreVO>> scoreFilter() {
         return Result.success(hostService.scoreFilter());
     }

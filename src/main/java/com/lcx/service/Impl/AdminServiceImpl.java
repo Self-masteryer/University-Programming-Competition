@@ -193,13 +193,14 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public void setSignUpTime(SignUpTime signUpTime) {
+        //设置报名时间
         String begin = ConvertUtil.parseDateStr(signUpTime.getBegin());
         String end = ConvertUtil.parseDateStr(signUpTime.getEnd());
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_BEGIN_TIME, begin);
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_END_TIME, end);
     }
 
-    public void setToTourist(){
+    public void setToTourist() {
 
     }
 }

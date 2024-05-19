@@ -8,8 +8,8 @@ import com.lcx.common.constant.Time;
 import com.lcx.common.exception.RepeatedDrawingException;
 import com.lcx.common.exception.process.NoSuchProcessException;
 import com.lcx.common.exception.process.ProcessSequenceException;
-import com.lcx.common.exception.process.ProcessStatusError;
 import com.lcx.common.exception.time.StartTimeException;
+import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.DistrictScoreMapper;
 import com.lcx.mapper.UserInfoMapper;
@@ -65,8 +65,12 @@ public class HostServiceImpl implements HostService {
         String zone = userInfo.getZone();
         log.info("{}:{} 比赛开始", group, zone);
         // 将比赛进程存进redis
-        String key = "process" + ":" + group + ":" + zone;
+        String key = RedisUtil.getProcessKey(group,zone);
         stringRedisTemplate.opsForValue().set(key, Process.WRITTEN);
+
+        //届数加一
+        int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
+        stringRedisTemplate.opsForValue().set("session", String.valueOf(session + 1));
     }
 
     // 推进下一流程
@@ -127,11 +131,8 @@ public class HostServiceImpl implements HostService {
         String group = userInfo.getGroup();
         String zone = userInfo.getZone();
 
-        //检验流程状态是否正确
-        checkProcess(Process.WRITTEN, group, zone);
-
         //判断是否已座位号抽签
-        String key = "seat_draw" + ":" + group + ":" + zone;
+        String key = RedisUtil.getSeatDrawKey(group,zone);
         String flag = stringRedisTemplate.opsForValue().get(key);
         if (flag != null) throw new RepeatedDrawingException(ErrorMessageConstant.REPEATED_DRAWING_ERROR);
 
@@ -145,7 +146,9 @@ public class HostServiceImpl implements HostService {
         List<SeatInfo> seatTable = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Contestant contestant = list.get(i);
-            DistrictScore districtScore = DistrictScore.builder().uid(contestant.getUid()).build();
+            int session=Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
+            DistrictScore districtScore = DistrictScore.builder()
+                    .uid(contestant.getUid()).session(session).build();
             String seatNum = group + ":" + zone + ":" + nums.get(i);
             districtScore.setSeatNum(seatNum);
             districtScoreMapper.insert(districtScore);
@@ -156,7 +159,7 @@ public class HostServiceImpl implements HostService {
         //按座位号排序
         seatTable.sort(Comparator.comparingInt(o -> Integer.parseInt(o.getSeatNum().substring(6))));
 
-        stringRedisTemplate.opsForValue().set(key, "The seat number has been drawn");
+        stringRedisTemplate.opsForValue().set(key, "yes");
 
         return seatTable;
     }
@@ -165,12 +168,11 @@ public class HostServiceImpl implements HostService {
     @Override
     @Transactional
     public List<DistrictScoreVO> scoreFilter() {
+        //获得用户信息
         UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        String group = userInfo.getGroup();
-        String zone = userInfo.getZone();
-        checkProcess(Process.WRITTEN, group, zone);
         // 查询成绩单
-        List<DistrictScoreVO> scores = districtScoreMapper.getVOListByGroupAndZone(group, zone);
+        List<DistrictScoreVO> scores = districtScoreMapper
+                .getVOListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
         // 按笔试成绩降序排序
         scores.sort(Comparator.comparingInt(DistrictScoreVO::getWrittenScore).reversed());
         //人数不满30人，直接返回
@@ -180,7 +182,7 @@ public class HostServiceImpl implements HostService {
             DistrictScoreVO districtScoreVO = scores.get(i);
             DistrictScore districtScore = districtScoreMapper.getBySeatNum(districtScoreVO.getSeatNum());
 
-            userMapper.updateRole(districtScore.getUid(), Role.TOURIST);// 设置身份
+            userMapper.updateRole(districtScore.getUid(), Role.TOURIST);// 设置成游客身份
             contestantMapper.deleteByUid(districtScore.getUid());// 删除选手
             districtScoreMapper.deleteByUid(districtScore.getUid());// 删除成绩
         }
@@ -188,14 +190,4 @@ public class HostServiceImpl implements HostService {
         return scores;
     }
 
-    // 检验流程状态
-    private boolean checkProcess(String process, String group, String zone) {
-        //从redis获取当前进程状态
-        String key = "process" + ":" + group + ":" + zone;
-        String reidsProcess = stringRedisTemplate.opsForValue().get(key);
-        // 不存在或不相等，抛异常
-        if (reidsProcess == null || !reidsProcess.equals(process))
-            throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
-        else return true;
-    }
 }

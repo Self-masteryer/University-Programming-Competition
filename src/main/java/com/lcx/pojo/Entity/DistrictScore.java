@@ -13,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class DistrictScore {
     private int id;
     private int uid;
+    private int session;//届数
     private String seatNum;// 座位号
     private String signNum;// 签号
     private int writtenScore;// 笔试成绩

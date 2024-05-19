@@ -9,7 +9,7 @@ import java.util.List;
 @Mapper
 public interface DistrictScoreMapper {
 
-    @Insert("insert into district_score (uid, seat_num) value (#{uid},#{seatNum});")
+    @Insert("insert into district_score (uid,session,seat_num) value (#{uid},#{session},#{seatNum});")
     void insert(DistrictScore districtScore);
 
     @Select("select * from district_score where uid = #{uid}")
@@ -25,4 +25,5 @@ public interface DistrictScoreMapper {
 
     @Delete("delete from district_score where uid=#{uid}")
     void deleteByUid(int uid);
+
 }
