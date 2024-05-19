@@ -31,4 +31,9 @@ public interface DistrictScoreMapper {
     @Update("update district_score set sign_num=#{signNum} where uid=#{uid}")
     void updateSignNumByUid(int uid, String signNum);
 
+    @Update("update district_score set practical_score=#{practicalScore} where uid=#{uid}")
+    void updatePracticalScoreByUid(int uid, float practicalScore);
+
+    @Update("update district_score set q_and_a_score=#{qAndAScore} where uid=#{uid}")
+    void updateQAndAScoreByUid(int uid, float qAndAScore);
 }

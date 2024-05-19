@@ -8,15 +8,15 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 @Mapper
-public interface PracticalScoreMapper {
+public interface QAndAScoreMapper {
 
-    @Insert("insert into practical_score (uid, sid, jid, score) " +
+    @Insert("insert into q_and_a_score (uid, sid, jid, score)" +
             "value (#{uid},#{sid},#{jid},#{score})")
     void insert(Score score);
 
-    @Select("select count(id) from practical_score where uid=#{uid}")
+    @Select("select count(id) from q_and_a_score where uid=#{uid}")
     int getCountByUid(int uid);
 
-    @Select("select score from practical_score where uid=#{uid}")
+    @Select("select score from q_and_a_score where uid=#{uid}")
     List<Integer> getScoresByUid(int uid);
 }

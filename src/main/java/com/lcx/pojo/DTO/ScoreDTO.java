@@ -1,4 +1,4 @@
-package com.lcx.pojo.Entity;
+package com.lcx.pojo.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,12 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PracticalScore {
+public class ScoreDTO {
 
-    private int id;
     private int uid;
-    private int sid;
-    private int jid;
+
     private int score;
 
 }

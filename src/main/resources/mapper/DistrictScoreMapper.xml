@@ -5,7 +5,7 @@
 
     <select id="getVOListByGroupAndZone" resultType="com.lcx.pojo.VO.DistrictScoreVO">
         select c.name,c.`group`,c.zone,ds.seat_num,ds.sign_num,
-               ds.written_score,ds.practical_score,ds.response_score,ds.final_score
+               ds.written_score,ds.practical_score,ds.q_and_a_score,ds.final_score
         from district_score ds left outer join contestant c on c.uid=ds.uid
         where c.`group`=#{group} and c.zone=#{zone};
     </select>

@@ -2,19 +2,17 @@ package com.lcx.service.Impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.ErrorMessageConstant;
+import com.lcx.common.constant.Process;
 import com.lcx.common.exception.SignNumOutOfBoundException;
-import com.lcx.mapper.ContestantMapper;
-import com.lcx.mapper.DistrictScoreMapper;
-import com.lcx.mapper.PracticalScoreMapper;
-import com.lcx.mapper.UserInfoMapper;
+import com.lcx.common.exception.process.NoSuchProcessException;
+import com.lcx.mapper.*;
 import com.lcx.pojo.DAO.SignInfoDAO;
-import com.lcx.pojo.DTO.PracticalScoreDTO;
+import com.lcx.pojo.DTO.ScoreDTO;
 import com.lcx.pojo.Entity.DistrictScore;
-import com.lcx.pojo.Entity.PracticalScore;
+import com.lcx.pojo.Entity.Score;
 import com.lcx.pojo.Entity.Student;
 import com.lcx.pojo.Entity.UserInfo;
 import com.lcx.pojo.VO.SignGroup;
-import com.lcx.pojo.VO.SignInfo;
 import com.lcx.service.JudgementService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -33,6 +31,8 @@ public class JudgementServiceImpl implements JudgementService {
     private ContestantMapper contestantMapper;
     @Resource
     private PracticalScoreMapper practicalScoreMapper;
+    @Resource
+    private QAndAScoreMapper qAndAScoreMapper;
 
     @Override
     @Transactional
@@ -51,23 +51,49 @@ public class JudgementServiceImpl implements JudgementService {
         int index = (signNum - 1) * 2;
         Student A = contestantMapper.getStudentByUid(list.get(index).getUid());
         Student B = contestantMapper.getStudentByUid(list.get(index + 1).getUid());
-        SignGroup signGroup = SignGroup.builder().A(A).B(B).build();
-        return signGroup;
+        return SignGroup.builder().A(A).B(B).build();
     }
 
     @Override
     @Transactional
-    public void rate(PracticalScoreDTO practicalScoreDTO) {
+    public void rate(ScoreDTO scoreDTO, String process) {
 
         // 获得成绩表ID
-        DistrictScore districtScore = districtScoreMapper.getByUid(practicalScoreDTO.getUid());
+        int uid = scoreDTO.getUid();
+        DistrictScore districtScore = districtScoreMapper.getByUid(uid);
 
-        // 构建实战成绩
-        PracticalScore practicalScore = PracticalScore.builder().uid(practicalScoreDTO.getUid())
+        // 分数
+        Score score = Score.builder().uid(scoreDTO.getUid())
                 .sid(districtScore.getId()).jid(StpUtil.getLoginIdAsInt())
-                .score(practicalScoreDTO.getPracticalScore()).build();
+                .score(scoreDTO.getScore()).build();
 
-        practicalScoreMapper.insert(practicalScore);
+        if (process.equals(Process.PRACTICE)) {
+            //插入实战成绩
+            practicalScoreMapper.insert(score);
+            //检查五位裁判是否打分完毕
+            int count = practicalScoreMapper.getCountByUid(uid);
+            if (count == 5) {
+                List<Integer> scores = practicalScoreMapper.getScoresByUid(uid);
+                int sum = 0;
+                for (Integer s : scores) sum += s;
+                // 插入评价分
+                districtScoreMapper.updatePracticalScoreByUid(uid, (float) sum / 5);
+            }
+        } else if (process.equals(Process.Q_AND_A)) {
+            // 插入问答成绩
+            qAndAScoreMapper.insert(score);
+            //检查五位裁判是否打分完毕
+            int count = qAndAScoreMapper.getCountByUid(uid);
+            if (count == 5) {
+                List<Integer> scores = qAndAScoreMapper.getScoresByUid(uid);
+                int sum = 0;
+                for (Integer s : scores) sum += s;
+                // 插入平均分
+                districtScoreMapper.updateQAndAScoreByUid(uid, (float) sum / 5);
+            }
+        } else {
+            throw new NoSuchProcessException(ErrorMessageConstant.NO_SUCH_PROCESS_EXCEPTION);
+        }
     }
 
 }
