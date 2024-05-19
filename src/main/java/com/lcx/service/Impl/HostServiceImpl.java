@@ -1,14 +1,11 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.lcx.common.constant.ErrorMessageConstant;
+import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.constant.Role;
-import com.lcx.common.constant.Time;
-import com.lcx.common.exception.RepeatedDrawingException;
 import com.lcx.common.exception.process.NoSuchProcessException;
 import com.lcx.common.exception.process.ProcessSequenceException;
-import com.lcx.common.exception.time.StartTimeException;
+import com.lcx.common.exception.process.StartCompetitionException;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.DistrictScoreMapper;
@@ -16,9 +13,11 @@ import com.lcx.mapper.UserInfoMapper;
 import com.lcx.mapper.UserMapper;
 import com.lcx.pojo.Entity.Contestant;
 import com.lcx.pojo.Entity.DistrictScore;
+import com.lcx.pojo.Entity.Student;
 import com.lcx.pojo.Entity.UserInfo;
 import com.lcx.pojo.VO.DistrictScoreVO;
 import com.lcx.pojo.VO.SeatInfo;
+import com.lcx.pojo.VO.SignGroup;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -54,19 +53,25 @@ public class HostServiceImpl implements HostService {
     public void startCompetition() {
         // 判断报名是否已结束
         String instantStr = stringRedisTemplate.opsForValue().get(Time.SIGN_UP_END_TIME);
-        if (instantStr == null) throw new StartTimeException(ErrorMessageConstant.START_TIME_ERROR);
+        if (instantStr == null) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
         long end = Long.parseLong(instantStr);
         long now = System.currentTimeMillis();
-        if (now < end) throw new StartTimeException(ErrorMessageConstant.START_TIME_ERROR);
+        if (now < end) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
 
         // 获得组别、赛区信息
         UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
         String group = userInfo.getGroup();
         String zone = userInfo.getZone();
+        // 判断比赛是否已经进行
+        String key = RedisUtil.getProcessKey(group, zone);
+        String value = stringRedisTemplate.opsForValue().get(key);
+        if(value!=null)
+            throw new StartCompetitionException(ErrorMessageConstant.COMPETITION_HAS_BEGUN);
+
         log.info("{}:{} 比赛开始", group, zone);
         // 将比赛进程存进redis
-        String key = RedisUtil.getProcessKey(group,zone);
-        stringRedisTemplate.opsForValue().set(key, Process.WRITTEN);
+        value = RedisUtil.getProcessValue(Process.WRITTEN, Step.SEAT_DRAW);
+        stringRedisTemplate.opsForValue().set(key, value);
 
         //届数加一
         int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
@@ -77,24 +82,35 @@ public class HostServiceImpl implements HostService {
     @Override
     @Transactional
     public void nextProcess(String process) {
-        // 获取前状态
-        String preProcess = switch (process) {
-            case Process.PRACTICE -> Process.WRITTEN;
-            case Process.Q_AND_A -> Process.PRACTICE;
-            case Process.FINAL -> Process.Q_AND_A;
-            // 没有这样的进程异常
+        // 获得前进程
+        String preProcess, step;
+        switch (process) {
+            case Process.PRACTICE -> {
+                preProcess = Process.WRITTEN;
+                step = Step.GROUP_DRAW;
+            }
+            case Process.Q_AND_A -> {
+                preProcess = Process.PRACTICE;
+                step = Step.RATE;
+            }
+            case Process.FINAL -> {
+                preProcess = Process.Q_AND_A;
+                step = Step.SCORE_EXPORT;
+            }
             default -> throw new NoSuchProcessException(ErrorMessageConstant.NO_SUCH_PROCESS_EXCEPTION);
-        };
+        }
         // 获取组别赛区信息
         UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        String key = "process" + ":" + userInfo.getGroup() + ":" + userInfo.getZone();
-        String reidsProcess = stringRedisTemplate.opsForValue().get(key);
+        String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
+        // 从redis中获得当前进程步骤
+        String redisValue = stringRedisTemplate.opsForValue().get(key);
+        String value = RedisUtil.getProcessValue(preProcess, Step.NEXT);
         //进程顺序错误
-        if (reidsProcess == null) throw new StartTimeException(ErrorMessageConstant.START_TIME_ERROR);
-        else if (!reidsProcess.equals(preProcess))
+        if (redisValue == null) throw new StartCompetitionException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+        else if (!redisValue.equals(value))
             throw new ProcessSequenceException(ErrorMessageConstant.PROCESS_SEQUENCE_ERROR);
 
-        stringRedisTemplate.opsForValue().set(key, process);
+        stringRedisTemplate.opsForValue().set(key, RedisUtil.getProcessValue(process, step));
     }
 
     // 通过excel上传笔试成绩
@@ -131,11 +147,6 @@ public class HostServiceImpl implements HostService {
         String group = userInfo.getGroup();
         String zone = userInfo.getZone();
 
-        //判断是否已座位号抽签
-        String key = RedisUtil.getSeatDrawKey(group,zone);
-        String flag = stringRedisTemplate.opsForValue().get(key);
-        if (flag != null) throw new RepeatedDrawingException(ErrorMessageConstant.REPEATED_DRAWING_ERROR);
-
         // 座位号抽签
         int count = contestantMapper.getCountByGroupAndZone(group, zone); // 组别赛区选手总数
         List<Integer> nums = new ArrayList<>();
@@ -146,7 +157,7 @@ public class HostServiceImpl implements HostService {
         List<SeatInfo> seatTable = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Contestant contestant = list.get(i);
-            int session=Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
+            int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
             DistrictScore districtScore = DistrictScore.builder()
                     .uid(contestant.getUid()).session(session).build();
             String seatNum = group + ":" + zone + ":" + nums.get(i);
@@ -158,8 +169,6 @@ public class HostServiceImpl implements HostService {
         }
         //按座位号排序
         seatTable.sort(Comparator.comparingInt(o -> Integer.parseInt(o.getSeatNum().substring(6))));
-
-        stringRedisTemplate.opsForValue().set(key, "yes");
 
         return seatTable;
     }
@@ -190,4 +199,65 @@ public class HostServiceImpl implements HostService {
         return scores;
     }
 
+    @Override
+    @Transactional
+    public List<SignGroup> groupDraw() {
+        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
+        List<Student> students = contestantMapper
+                .getStudentListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
+        // 分组信息
+        List<SignGroup> signGroups = groupDraw(students);
+        // 更新成绩单信息
+        for (SignGroup signGroup : signGroups) {
+            districtScoreMapper.updateSignNumByUid(signGroup.getA().getUid(),"A"+ signGroup.getSignNum());
+            districtScoreMapper.updateSignNumByUid(signGroup.getB().getUid(),"B"+ signGroup.getSignNum());
+        }
+        return signGroups;
+    }
+
+    public List<SignGroup> groupDraw(List<Student> students) {
+        // 创建一个映射来跟踪每个学校的选手
+        Map<String, List<Student>> schoolStudents = new HashMap<>();
+        for (Student student : students) {
+            schoolStudents.computeIfAbsent(student.getSchool(), k -> new ArrayList<>()).add(student);
+        }
+        int signNum = 1;
+        //打乱选手顺序
+        Collections.shuffle(students);
+        List<SignGroup> signGroups = new ArrayList<>();
+        //存放已排好的选手
+        Stack<Student> stack = new Stack<>();
+        while (!students.isEmpty()) {
+
+            Student A = students.remove(0);
+            schoolStudents.get(A.getSchool()).remove(A);
+            stack.push(A);
+
+            boolean flag = true;
+            for (String school : new ArrayList<>(schoolStudents.keySet())) {
+                if (!Objects.equals(school, A.getSchool()) && !schoolStudents.get(school).isEmpty()) {
+
+                    Student B = schoolStudents.get(school).remove(0);
+                    students.remove(B);
+                    stack.push(A);
+
+                    signGroups.add(new SignGroup(signNum++, A, B));
+                    flag = false;
+                    break;
+                }
+            }
+            // 剩余选手来自同一学校。回退一步
+            if (flag) {
+                Student a = stack.pop();
+                Student b = stack.pop();
+                students.add(a);
+                students.add(b);
+                schoolStudents.get(a.getSchool()).add(a);
+                schoolStudents.get(b.getSchool()).add(b);
+                signGroups.remove(signGroups.size() - 1);
+                signNum--;
+            }
+        }
+        return signGroups;
+    }
 }

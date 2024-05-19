@@ -12,10 +12,11 @@ public class ErrorMessageConstant {
     public static final String SIGN_UP_TIME_ERROR = "报名时间错误";
 
     public static final String START_TIME_ERROR = "开启比赛时间异常";
+    public static final String COMPETITION_HAS_BEGUN = "比赛已经开始";
     public static final String NO_SUCH_PROCESS_EXCEPTION = "没有这样的进程异常";
     public static final String PROCESS_SEQUENCE_ERROR = "进程顺序错误";
     public static final String PROCESS_STATUS_ERROR = "进程状态错误";
 
-    public static final String REPEATED_DRAWING_ERROR = "多次抽签异常";
+    public static final String SIGN_NUM_OUT_OF_BOUND = "组号范围错误";
 
 }

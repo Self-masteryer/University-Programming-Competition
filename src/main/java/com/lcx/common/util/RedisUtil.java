@@ -6,8 +6,12 @@ public class RedisUtil {
         return "process" + ":" + group + ":" + zone;
     }
 
-    public static String getSeatDrawKey(String group,String zone){
-        return "seat_draw" + ":" + group + ":" + zone;
+    public static String getProcessValue(String process,String step){
+        return process + ":" + step;
     }
+
+//    public static String getSeatDrawKey(String group,String zone){
+//        return "seat_draw" + ":" + group + ":" + zone;
+//    }
 
 }

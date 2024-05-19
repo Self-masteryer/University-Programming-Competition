@@ -1,6 +1,8 @@
 package com.lcx.mapper;
 
+import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.Entity.Contestant;
+import com.lcx.pojo.Entity.Student;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -29,4 +31,9 @@ public interface ContestantMapper {
     @Delete("delete from contestant where uid=#{uid}")
     void deleteByUid(int uid);
 
+    List<Student> getStudentListByGroupAndZone(String group, String zone);
+
+    List<SignInfoDAO> getSignInfoListByGroupAndZone(String group, String zone);
+
+    Student getStudentByUid(int uid);
 }

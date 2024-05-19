@@ -13,4 +13,19 @@
         where id=#{id}
     </update>
 
+    <select id="getStudentListByGroupAndZone" resultType="com.lcx.pojo.Entity.Student">
+        select c.uid, c.name, s.name as school from contestant c ,school s
+        where c.sid=s.id and c.`group`=#{group} and c.zone=#{zone};
+    </select>
+
+    <select id="getSignInfoListByGroupAndZone" resultType="com.lcx.pojo.DAO.SignInfoDAO">
+        select c.uid,ds.sign_num from contestant c ,district_score ds
+        where c.uid=ds.uid and c.`group`=#{group} and c.zone=#{zone};
+    </select>
+
+    <select id="getStudentByUid" resultType="com.lcx.pojo.Entity.Student">
+        select c.uid, c.name, s.name as school from contestant c ,school s
+        where c.sid=s.id and c.uid=#{uid};
+    </select>
+
 </mapper>

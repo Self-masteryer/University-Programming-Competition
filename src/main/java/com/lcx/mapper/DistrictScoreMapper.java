@@ -1,6 +1,8 @@
 package com.lcx.mapper;
 
+import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.Entity.DistrictScore;
+import com.lcx.pojo.Entity.Student;
 import com.lcx.pojo.VO.DistrictScoreVO;
 import org.apache.ibatis.annotations.*;
 
@@ -25,5 +27,8 @@ public interface DistrictScoreMapper {
 
     @Delete("delete from district_score where uid=#{uid}")
     void deleteByUid(int uid);
+
+    @Update("update district_score set sign_num=#{signNum} where uid=#{uid}")
+    void updateSignNumByUid(int uid, String signNum);
 
 }
