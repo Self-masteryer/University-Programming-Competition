@@ -19,4 +19,9 @@ public interface QAndAScoreMapper {
 
     @Select("select score from q_and_a_score where uid=#{uid}")
     List<Integer> getScoresByUid(int uid);
+
+    @Select("select count(id) from q_and_a_score where uid=#{uid} and jid=#{jid}")
+    int checkTime(int uid, int jid);
+
+    int getCountByUidList(List<Integer> uidList);
 }

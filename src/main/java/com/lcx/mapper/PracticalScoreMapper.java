@@ -14,9 +14,11 @@ public interface PracticalScoreMapper {
             "value (#{uid},#{sid},#{jid},#{score})")
     void insert(Score score);
 
-    @Select("select count(id) from practical_score where uid=#{uid}")
-    int getCountByUid(int uid);
+    int getCountByUidList(List<Integer> uidList);
 
     @Select("select score from practical_score where uid=#{uid}")
     List<Integer> getScoresByUid(int uid);
+
+    @Select("select count(id) from practical_score where uid=#{uid} and jid=#{jid}")
+    int checkTime(int uid, int jid);
 }

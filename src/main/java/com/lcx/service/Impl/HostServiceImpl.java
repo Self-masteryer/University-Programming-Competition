@@ -65,7 +65,7 @@ public class HostServiceImpl implements HostService {
         // 判断比赛是否已经进行
         String key = RedisUtil.getProcessKey(group, zone);
         String value = stringRedisTemplate.opsForValue().get(key);
-        if(value!=null)
+        if (value != null)
             throw new StartCompetitionException(ErrorMessageConstant.COMPETITION_HAS_BEGUN);
 
         log.info("{}:{} 比赛开始", group, zone);
@@ -209,8 +209,8 @@ public class HostServiceImpl implements HostService {
         List<SignGroup> signGroups = groupDraw(students);
         // 更新成绩单信息
         for (SignGroup signGroup : signGroups) {
-            districtScoreMapper.updateSignNumByUid(signGroup.getA().getUid(),"A"+ signGroup.getSignNum());
-            districtScoreMapper.updateSignNumByUid(signGroup.getB().getUid(),"B"+ signGroup.getSignNum());
+            districtScoreMapper.updateSignNumByUid(signGroup.getA().getUid(), "A" + signGroup.getSignNum());
+            districtScoreMapper.updateSignNumByUid(signGroup.getB().getUid(), "B" + signGroup.getSignNum());
         }
         return signGroups;
     }
@@ -222,42 +222,50 @@ public class HostServiceImpl implements HostService {
             schoolStudents.computeIfAbsent(student.getSchool(), k -> new ArrayList<>()).add(student);
         }
         int signNum = 1;
-        //打乱选手顺序
-        Collections.shuffle(students);
-        List<SignGroup> signGroups = new ArrayList<>();
-        //存放已排好的选手
+        Collections.shuffle(students);// 打乱选手顺序
+        List<SignGroup> signGroups = new ArrayList<>();// 存放分组信息
+        while (students.size() > 6) {
+            Student A = students.remove(0);
+            schoolStudents.get(A.getSchool()).remove(A);
+            for (String school : new ArrayList<>(schoolStudents.keySet())) {
+                if (!schoolStudents.get(school).isEmpty() && !Objects.equals(school, A.getSchool())) {
+                    Student B = schoolStudents.get(school).remove(0);
+                    students.remove(B);
+                    signGroups.add(new SignGroup(signNum++, A, B));
+                    break;
+                }
+            }
+        }
+        // 剩下6名选手随机分组可能发生同校同组的情况，需要回退
         Stack<Student> stack = new Stack<>();
         while (!students.isEmpty()) {
-
             Student A = students.remove(0);
             schoolStudents.get(A.getSchool()).remove(A);
             stack.push(A);
-
             boolean flag = true;
             for (String school : new ArrayList<>(schoolStudents.keySet())) {
-                if (!Objects.equals(school, A.getSchool()) && !schoolStudents.get(school).isEmpty()) {
-
+                if (!schoolStudents.get(school).isEmpty() && !Objects.equals(school, A.getSchool())) {
                     Student B = schoolStudents.get(school).remove(0);
                     students.remove(B);
-                    stack.push(A);
-
+                    stack.push(B);
                     signGroups.add(new SignGroup(signNum++, A, B));
                     flag = false;
                     break;
                 }
             }
-            // 剩余选手来自同一学校。回退一步
+            // 剩下两名选手来自同一学校，回退两步
             if (flag) {
-                Student a = stack.pop();
-                Student b = stack.pop();
-                students.add(a);
-                students.add(b);
-                schoolStudents.get(a.getSchool()).add(a);
-                schoolStudents.get(b.getSchool()).add(b);
+                students.addAll(stack);
+                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
                 signGroups.remove(signGroups.size() - 1);
-                signNum--;
+                signGroups.remove(signGroups.size() - 1);
+                signNum -= 2;
             }
         }
         return signGroups;
     }
+
 }

@@ -36,4 +36,7 @@ public interface ContestantMapper {
     List<SignInfoDAO> getSignInfoListByGroupAndZone(String group, String zone);
 
     Student getStudentByUid(int uid);
+
+    @Select("select uid from contestant where `group`=#{group} and zone=#{zone}")
+    List<Integer> getUidListByGroupAndZone(String group, String zone);
 }

@@ -18,5 +18,6 @@ public class ErrorMessageConstant {
     public static final String PROCESS_STATUS_ERROR = "进程状态错误";
 
     public static final String SIGN_NUM_OUT_OF_BOUND = "组号范围错误";
+    public static final String REPEATED_RATE = "重复打分";
 
 }
