@@ -2,7 +2,9 @@ package com.lcx.mapper;
 
 import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.Entity.Contestant;
+import com.lcx.pojo.Entity.ScoreInfo;
 import com.lcx.pojo.Entity.Student;
+import com.lcx.pojo.VO.ScoreVo;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -16,8 +18,8 @@ public interface ContestantMapper {
     @Select("select * from contestant where id_card=#{idCard}")
     Contestant getByIDCard(String idCard);
 
-    @Insert("insert into contestant (uid, sid, name, id_card, `group`, zone)" +
-            "value (#{uid},#{sid},#{name},#{idCard},#{group},#{zone})")
+    @Insert("insert into contestant (uid, school, name, id_card, `group`, zone)" +
+            "value (#{uid},#{school},#{name},#{idCard},#{group},#{zone})")
     void insert(Contestant contestant);
 
     void update(Contestant contestant);
@@ -39,4 +41,8 @@ public interface ContestantMapper {
 
     @Select("select uid from contestant where `group`=#{group} and zone=#{zone}")
     List<Integer> getUidListByGroupAndZone(String group, String zone);
+
+    List<ScoreVo> getScoreVoListByGroupAndZone(String group, String zone);
+
+    void deleteByUidAndZone(Integer uid, String zone);
 }

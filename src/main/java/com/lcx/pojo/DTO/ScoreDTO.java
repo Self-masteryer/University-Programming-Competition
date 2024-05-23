@@ -1,5 +1,6 @@
 package com.lcx.pojo.DTO;
 
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class ScoreDTO {
 
     private int uid;
-
-    private int score;
+    @Pattern(regexp = "^(100|[0-9]|[1-9][0-9])$")
+    private String score;
 
 }

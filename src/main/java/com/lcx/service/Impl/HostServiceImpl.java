@@ -1,25 +1,30 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.pdf.*;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.exception.process.NoSuchProcessException;
-import com.lcx.common.exception.process.ProcessSequenceException;
+import com.lcx.common.exception.process.ProcessStatusError;
 import com.lcx.common.exception.process.StartCompetitionException;
+import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.ContestantMapper;
-import com.lcx.mapper.DistrictScoreMapper;
+import com.lcx.mapper.ScoreInfoMapper;
 import com.lcx.mapper.UserInfoMapper;
 import com.lcx.mapper.UserMapper;
 import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.Entity.DistrictScore;
+import com.lcx.pojo.Entity.ScoreInfo;
 import com.lcx.pojo.Entity.Student;
 import com.lcx.pojo.Entity.UserInfo;
-import com.lcx.pojo.VO.DistrictScoreVO;
+import com.lcx.pojo.VO.WrittenScore;
+import com.lcx.pojo.VO.ScoreVo;
 import com.lcx.pojo.VO.SeatInfo;
 import com.lcx.pojo.VO.SignGroup;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -29,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -43,7 +49,7 @@ public class HostServiceImpl implements HostService {
     @Resource
     private ContestantMapper contestantMapper;
     @Resource
-    private DistrictScoreMapper districtScoreMapper;
+    private ScoreInfoMapper scoreInfoMapper;
     @Resource
     private UserMapper userMapper;
 
@@ -81,36 +87,41 @@ public class HostServiceImpl implements HostService {
     // 推进下一流程
     @Override
     @Transactional
-    public void nextProcess(String process) {
-        // 获得前进程
-        String preProcess, step;
-        switch (process) {
-            case Process.PRACTICE -> {
-                preProcess = Process.WRITTEN;
-                step = Step.GROUP_DRAW;
-            }
-            case Process.Q_AND_A -> {
-                preProcess = Process.PRACTICE;
-                step = Step.RATE;
-            }
-            case Process.FINAL -> {
-                preProcess = Process.Q_AND_A;
-                step = Step.SCORE_EXPORT;
-            }
-            default -> throw new NoSuchProcessException(ErrorMessageConstant.NO_SUCH_PROCESS_EXCEPTION);
-        }
-        // 获取组别赛区信息
+    public String nextProcess() {
+
+        // 获得当前环节
         UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
         String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
-        // 从redis中获得当前进程步骤
-        String redisValue = stringRedisTemplate.opsForValue().get(key);
-        String value = RedisUtil.getProcessValue(preProcess, Step.NEXT);
-        //进程顺序错误
-        if (redisValue == null) throw new StartCompetitionException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
-        else if (!redisValue.equals(value))
-            throw new ProcessSequenceException(ErrorMessageConstant.PROCESS_SEQUENCE_ERROR);
+        String value = stringRedisTemplate.opsForValue().get(key);
+        // 比赛未开启
+        if (value == null)
+            throw new ProcessStatusError(ErrorMessageConstant.COMPETITION_HAS__NOT_BEGUN);
+        String[] now = value.split(":");
+        //进程错误，无法推进下一环节
+        if (!now[1].equals(Step.NEXT))
+            throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
 
-        stringRedisTemplate.opsForValue().set(key, RedisUtil.getProcessValue(process, step));
+        // 获得下一环节
+        String nextProcess = null, step = null;
+        switch (now[0]) {
+            case Process.WRITTEN -> {
+                nextProcess = Process.PRACTICE;
+                step = Step.GROUP_DRAW;
+            }
+            case Process.PRACTICE -> {
+                nextProcess = Process.Q_AND_A;
+                step = Step.RATE;
+            }
+            case Process.Q_AND_A -> {
+                nextProcess = Process.FINAL;
+                step = Step.SCORE_EXPORT;
+            }
+        }
+        // 推进至下一环节
+        String process = RedisUtil.getProcessValue(nextProcess, step);
+        stringRedisTemplate.opsForValue().set(key, process);
+
+        return nextProcess;
     }
 
     // 通过excel上传笔试成绩
@@ -126,12 +137,12 @@ public class HostServiceImpl implements HostService {
                 //获得区赛成绩表
                 String idCard = row.getCell(1).getStringCellValue();
                 Contestant contestant = contestantMapper.getByIDCard(idCard);
-                DistrictScore districtScore = districtScoreMapper.getByUid(contestant.getUid());
+                ScoreInfo scoreInfo = scoreInfoMapper.getByUid(contestant.getUid());
                 //更新笔试成绩
                 int writtenScore = (int) row.getCell(5).getNumericCellValue();
-                districtScore.setWrittenScore(writtenScore);
+                scoreInfo.setWrittenScore(writtenScore);
 
-                districtScoreMapper.updateWrittenScore(districtScore);
+                scoreInfoMapper.updateWrittenScore(scoreInfo);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -158,11 +169,11 @@ public class HostServiceImpl implements HostService {
         for (int i = 0; i < count; i++) {
             Contestant contestant = list.get(i);
             int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
-            DistrictScore districtScore = DistrictScore.builder()
-                    .uid(contestant.getUid()).session(session).build();
+            ScoreInfo scoreInfo = ScoreInfo.builder().uid(contestant.getUid())
+                    .session(session).zone(contestant.getZone()).build();
             String seatNum = group + ":" + zone + ":" + nums.get(i);
-            districtScore.setSeatNum(seatNum);
-            districtScoreMapper.insert(districtScore);
+            scoreInfo.setSeatNum(seatNum);
+            scoreInfoMapper.insert(scoreInfo);
             //座位信息
             SeatInfo seatInfo = SeatInfo.builder().name(contestant.getName()).seatNum(seatNum).build();
             seatTable.add(seatInfo);
@@ -176,24 +187,24 @@ public class HostServiceImpl implements HostService {
     // 按笔试成绩筛选
     @Override
     @Transactional
-    public List<DistrictScoreVO> scoreFilter() {
+    public List<WrittenScore> scoreFilter() {
         //获得用户信息
         UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
         // 查询成绩单
-        List<DistrictScoreVO> scores = districtScoreMapper
+        List<WrittenScore> scores = scoreInfoMapper
                 .getVOListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
         // 按笔试成绩降序排序
-        scores.sort(Comparator.comparingInt(DistrictScoreVO::getWrittenScore).reversed());
+        scores.sort(Comparator.comparingInt(WrittenScore::getWrittenScore).reversed());
         //人数不满30人，直接返回
         if (scores.size() <= 30) return scores;
         // 将淘汰选手的账号身份设置为游客，只能查询往年成绩
         for (int i = 30; i < scores.size(); i++) {
-            DistrictScoreVO districtScoreVO = scores.get(i);
-            DistrictScore districtScore = districtScoreMapper.getBySeatNum(districtScoreVO.getSeatNum());
+            WrittenScore writtenScore = scores.get(i);
+            ScoreInfo scoreInfo = scoreInfoMapper.getBySeatNum(writtenScore.getSeatNum());
 
-            userMapper.updateRole(districtScore.getUid(), Role.TOURIST);// 设置成游客身份
-            contestantMapper.deleteByUid(districtScore.getUid());// 删除选手
-            districtScoreMapper.deleteByUid(districtScore.getUid());// 删除成绩
+            userMapper.updateRole(scoreInfo.getUid(), Role.TOURIST);// 设置成游客身份
+            contestantMapper.deleteByUid(scoreInfo.getUid());// 删除选手
+            scoreInfoMapper.deleteByUid(scoreInfo.getUid());// 删除成绩
         }
         // 返回晋级选手成绩单
         return scores;
@@ -209,10 +220,79 @@ public class HostServiceImpl implements HostService {
         List<SignGroup> signGroups = groupDraw(students);
         // 更新成绩单信息
         for (SignGroup signGroup : signGroups) {
-            districtScoreMapper.updateSignNumByUid(signGroup.getA().getUid(), "A" + signGroup.getSignNum());
-            districtScoreMapper.updateSignNumByUid(signGroup.getB().getUid(), "B" + signGroup.getSignNum());
+            scoreInfoMapper.updateSignNumByUid(signGroup.getA().getUid(), "A" + signGroup.getSignNum());
+            scoreInfoMapper.updateSignNumByUid(signGroup.getB().getUid(), "B" + signGroup.getSignNum());
         }
         return signGroups;
+    }
+
+    @Override
+    @Transactional
+    public void exportScoreToPdf(HttpServletResponse response) {
+        // 获得选手成绩信息
+        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
+        String group = userInfo.getGroup();
+        String zone = userInfo.getZone();
+        List<ScoreVo> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
+        // 降序排序
+        scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
+
+        // 将group,zone转换为中文
+        group = ConvertUtil.parseGroupStr(group);
+        zone = ConvertUtil.parseZoneStr(zone);
+
+        InputStream in = this.getClass().getClassLoader()
+                .getResourceAsStream("templates/高校编程能力大赛成绩导出模板.pdf");
+        try {
+            PdfReader reader = new PdfReader(in);
+            ServletOutputStream out = response.getOutputStream();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            PdfStamper stamper = new PdfStamper(reader, bos);
+            AcroFields form = stamper.getAcroFields();
+
+            // 给表单添加中文字体
+            BaseFont baseFont = BaseFont.createFont(
+                    "D:\\develop\\idea\\University-Programming-Competition\\src\\main\\resources\\fonts\\Deng.ttf"
+                    , BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            form.addSubstitutionFont(baseFont);
+
+            // 插入数据
+            int count = 1;
+            String key = "fill_";
+            for (ScoreVo score : scoreInfoList) {
+                form.setField(key + count, score.getName());count++;
+                form.setField(key + count, group);count++;
+                form.setField(key + count, zone);count++;
+                form.setField(key + count, score.getSeatNum());count++;
+                form.setField(key + count, String.valueOf(score.getWrittenScore()));count++;
+                form.setField(key + count, String.valueOf(score.getPracticalScore()));count++;
+                form.setField(key + count, String.valueOf(score.getQAndAScore()));count++;
+                form.setField(key + count, String.valueOf(score.getFinalScore()));count++;
+            }
+
+            // 如果为false那么生成的PDF文件还能编辑
+            stamper.setFormFlattening(true);
+            stamper.close();
+            // PDF文档的抽象表示
+            Document doc = new Document();
+            // 复制或合并PDF页面
+            PdfCopy copy = new PdfCopy(doc, out);
+            // 开始添加内容
+            doc.open();
+            // 要复制的页面
+            PdfImportedPage importPage = copy.getImportedPage(new PdfReader(bos.toByteArray()), 1);
+            // 将页面内容复制到最终的 PDF 文档中
+            copy.addPage(importPage);
+
+            String fileName = group + zone + "最终成绩.pdf";
+            response.setContentType("application/force-download");
+            response.setHeader("Content-Disposition", "attachment;fileName=" + fileName);
+
+            doc.close();
+            in.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public List<SignGroup> groupDraw(List<Student> students) {

@@ -4,7 +4,7 @@
 <mapper namespace="com.lcx.mapper.QAndAScoreMapper">
 
     <select id="getCountByUidList" resultType="java.lang.Integer">
-        select count(id) from practical_score where uid in
+        select count(id) from q_and_a_score where uid in
         <foreach collection="uidList" item="uid" open="(" separator="," close=")">
             #{uid}
         </foreach>

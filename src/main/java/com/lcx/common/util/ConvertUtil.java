@@ -34,6 +34,18 @@ public class ConvertUtil {
         };
     }
 
+    public static String parseZoneStr(String zone) {
+        return switch (zone) {
+            case Zone.NW -> Zone.NORTH_WEST;
+            case Zone.SW -> Zone.SOUTH_WEST;
+            case Zone.NE -> Zone.NORTH_EASE;
+            case Zone.SE -> Zone.SOUTH_EAST;
+            case Zone.E -> Zone.EAST;
+            case Zone.C -> Zone.CENTRAL;
+            default -> Zone.NATIONAL;
+        };
+    }
+
     public static String parseGroupSimStr(String group) {
         return switch (group) {
             case Group.BK -> "BK";
@@ -63,7 +75,7 @@ public class ConvertUtil {
 
     public static String parseDateStr(LocalDateTime localDateTime) {
         // 转换为ZonedDateTime
-        ZonedDateTime zonedDateTime=localDateTime.atZone(ZoneId.systemDefault());
+        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.systemDefault());
         return String.valueOf(zonedDateTime.toInstant().toEpochMilli());
     }
 }

@@ -1,17 +1,16 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.secure.BCrypt;
+import com.lcx.common.constant.Prize;
 import com.lcx.common.constant.Role;
 import com.lcx.common.constant.Time;
+import com.lcx.common.constant.Zone;
 import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RandomStringUtils;
-import com.lcx.mapper.SchoolMapper;
-import com.lcx.mapper.UserInfoMapper;
-import com.lcx.mapper.UserMapper;
+import com.lcx.mapper.*;
 import com.lcx.pojo.DTO.SignUpTime;
-import com.lcx.pojo.Entity.School;
-import com.lcx.pojo.Entity.User;
-import com.lcx.pojo.Entity.UserInfo;
+import com.lcx.pojo.Entity.*;
+import com.lcx.pojo.VO.ScoreVo;
 import com.lcx.service.AdminService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
@@ -19,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -38,6 +41,18 @@ public class AdminServiceImpl implements AdminService {
     private SchoolMapper schoolMapper;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private ContestantMapper contestantMapper;
+    @Resource
+    private StudentScoreMapper studentScoreMapper;
+    @Resource
+    private ScoreInfoMapper scoreInfoMapper;
+    @Resource
+    private PreScoreMapper preScoreMapper;
+    @Resource
+    private QAndAScoreMapper qAndAScoreMapper;
+    @Resource
+    private PracticalScoreMapper practicalScoreMapper;
 
     @Override
     @Transactional
@@ -111,10 +126,6 @@ public class AdminServiceImpl implements AdminService {
             //传回账号数据
             response.setContentType("application/vnd.ms-excel");
             response.setHeader("Content-Disposition", "attachment; filename=userAccount.xls");
-//            String fileName = "用户账号.xlsx";
-//            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
-//            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-//            response.setHeader("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"");
             ServletOutputStream out = response.getOutputStream();
             outExcel.write(out);
             //关闭资源
@@ -177,8 +188,6 @@ public class AdminServiceImpl implements AdminService {
             //传回账号数据
             response.setContentType("application/vnd.ms-excel");
             response.setHeader("Content-Disposition", "attachment; filename=schoolAccount.xls");
-//            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-//            response.setHeader("Content-Disposition", "attachment; filename=\"schoolAccount.xlsx\"");
             ServletOutputStream out = response.getOutputStream();
             outExcel.write(out);
             //关闭资源
@@ -201,6 +210,66 @@ public class AdminServiceImpl implements AdminService {
     }
 
     public void setToTourist() {
+    }
 
+    @Override
+    public void addStudentScore(String group, String zone) {
+        List<ScoreVo> scoreInfoList = contestantMapper
+                .getScoreVoListByGroupAndZone(group, zone);
+        scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
+
+        int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
+        for (int i = 0; i < 5; i++) {
+            ScoreVo scoreVo = scoreInfoList.get(i);
+            StudentScore studentScore = StudentScore.builder().name(scoreVo.getName()).idCard(scoreVo.getIdCard())
+                    .school(scoreVo.getSchool()).session(session).score(scoreVo.getFinalScore()).build();
+            if (i < 2) studentScore.setPrize(Prize.PROVINCIAL_FIRST_PRIZE);
+            else studentScore.setPrize(Prize.PROVINCIAL_SECOND_PRIZE);
+
+            studentScoreMapper.insert(studentScore);
+        }
+    }
+
+    @Override
+    public void addToNational(String group, String zone) {
+        List<ScoreVo> scoreInfoList = contestantMapper
+                .getScoreVoListByGroupAndZone(group, zone);
+        scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
+
+        for (int i = 0; i < 5; i++) {
+            ScoreVo scoreVo = scoreInfoList.get(i);
+            Contestant contestant = Contestant.builder().uid(userInfoMapper.getUidByIDCard(scoreVo.getIdCard()))
+                    .name(scoreVo.getName()).school(scoreVo.getSchool()).idCard(scoreVo.getIdCard())
+                    .group(scoreVo.getGroup()).zone(Zone.N).build();
+
+            contestantMapper.insert(contestant);
+        }
+    }
+
+    @Override
+    public void addPreScore(String group, String zone) {
+        List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
+        List<ScoreInfo> scoreInfoList = new ArrayList<>();
+        for (Integer uid : uidList) scoreInfoList.add(scoreInfoMapper.getByUid(uid));
+        scoreInfoList.sort(Comparator.comparingDouble(ScoreInfo::getFinalScore).reversed());
+        for (int i = 0; i < scoreInfoList.size(); i++) {
+            ScoreInfo scoreInfo = scoreInfoList.get(i);
+            PreScore preScore = new PreScore();
+            BeanUtils.copyProperties(scoreInfo, preScore);
+            preScore.setRanking(i + 1);
+
+            preScoreMapper.insert(preScore);
+        }
+    }
+
+    @Override
+    public void deleteScore(String group, String zone) {
+        List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
+        for(Integer uid : uidList) {
+            scoreInfoMapper.deleteByUid(uid);
+            practicalScoreMapper.deleteByUid(uid);
+            qAndAScoreMapper.deleteByUid(uid);
+            contestantMapper.deleteByUidAndZone(uid,zone);
+        }
     }
 }

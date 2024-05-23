@@ -9,4 +9,12 @@ public class Zone {
     public static final String CENTRAL = "中部赛区";
     public static final String EAST = "东部赛区";
     public static final String NATIONAL = "全国";
+
+    public static final String NW = "NW";
+    public static final String SW = "SW";
+    public static final String NE = "NE";
+    public static final String SE = "SE";
+    public static final String C = "C";
+    public static final String E = "E";
+    public static final String N = "N";
 }

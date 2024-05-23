@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
                     .name(signUpDTO.getName()).rid(Role.CONTESTANT).enabled(1).build();
             userMapper.insert(user);
             // 创建选手
-            Contestant contestant=Contestant.builder().uid(user.getId()).sid(school.getId())
+            Contestant contestant=Contestant.builder().uid(user.getId()).school(school.getName())
                     .name(signUpDTO.getName()).idCard(signUpDTO.getIdCard())
                     .group(school.getGroup()).zone(school.getZone()).build();
             contestantMapper.insert(contestant);
@@ -115,8 +115,9 @@ public class UserServiceImpl implements UserService {
             user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
             userMapper.update(user);
             // 创建选手
-            Contestant contestant=Contestant.builder().uid(user.getId()).sid(school.getId()).name(signUpDTO.getName())
-                    .idCard(signUpDTO.getIdCard()).group(school.getGroup()).zone(school.getZone()).build();
+            Contestant contestant=Contestant.builder().uid(user.getId()).school(school.getName())
+                    .name(signUpDTO.getName()).idCard(signUpDTO.getIdCard())
+                    .group(school.getGroup()).zone(school.getZone()).build();
             contestantMapper.update(contestant);
 
             signUpVO.setName(signUpDTO.getName());

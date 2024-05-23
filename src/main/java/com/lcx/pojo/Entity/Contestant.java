@@ -13,8 +13,8 @@ public class Contestant {
 
     private int id;
     private int uid;
-    private int sid;
     private String name;
+    private String school;
     private String idCard;
     private String group;
     private String zone;

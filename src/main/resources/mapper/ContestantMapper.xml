@@ -12,20 +12,32 @@
         </set>
         where id=#{id}
     </update>
+    <delete id="deleteByUidAndZone">
+        delete from contestant
+        <where>
+            uid=#{uid} and
+            <if test="zone!=null">zone!=#{zone}</if>
+        </where>
+    </delete>
 
     <select id="getStudentListByGroupAndZone" resultType="com.lcx.pojo.Entity.Student">
-        select c.uid, c.name, s.name as school from contestant c ,school s
-        where c.sid=s.id and c.`group`=#{group} and c.zone=#{zone};
+        select uid,name,school from contestant where `group`=#{group} and zone=#{zone};
     </select>
 
     <select id="getSignInfoListByGroupAndZone" resultType="com.lcx.pojo.DAO.SignInfoDAO">
-        select c.uid,ds.sign_num from contestant c ,district_score ds
+        select c.uid,ds.sign_num from contestant c ,score_info ds
         where c.uid=ds.uid and c.`group`=#{group} and c.zone=#{zone};
     </select>
 
     <select id="getStudentByUid" resultType="com.lcx.pojo.Entity.Student">
         select c.uid, c.name, s.name as school from contestant c ,school s
-        where c.sid=s.id and c.uid=#{uid};
+        where c.school=s.name and c.uid=#{uid};
+    </select>
+
+    <select id="getScoreVoListByGroupAndZone" resultType="com.lcx.pojo.VO.ScoreVo">
+        select c.name,c.school,c.id_card,c.`group`,c.zone,
+               s.seat_num,s.written_score,s.practical_score,s.q_and_a_score,s.final_score
+        from contestant c,score_info s where c.uid=s.uid and c.`group`=#{group} and c.zone=#{zone};
     </select>
 
 </mapper>

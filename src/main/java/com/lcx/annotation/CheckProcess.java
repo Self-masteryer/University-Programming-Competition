@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CheckProcess {
 
-    String process();
+    String process() default "";
 
     String step();
 

@@ -4,11 +4,13 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.ErrorMessageConstant;
 import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Step;
+import com.lcx.common.constant.Zone;
 import com.lcx.common.exception.RateException;
 import com.lcx.common.exception.SignNumOutOfBoundException;
 import com.lcx.common.exception.process.NoSuchProcessException;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
+import com.lcx.pojo.DAO.ScoreDAO;
 import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.DTO.ScoreDTO;
 import com.lcx.pojo.Entity.*;
@@ -26,7 +28,7 @@ import java.util.List;
 public class JudgementServiceImpl implements JudgementService {
 
     @Resource
-    private DistrictScoreMapper districtScoreMapper;
+    private ScoreInfoMapper scoreInfoMapper;
     @Resource
     private UserInfoMapper userInfoMapper;
     @Resource
@@ -64,72 +66,91 @@ public class JudgementServiceImpl implements JudgementService {
 
         // 获得成绩表ID
         int uid = scoreDTO.getUid();
-        DistrictScore districtScore = districtScoreMapper.getByUid(uid);
+        ScoreInfo scoreInfo = scoreInfoMapper.getByUid(uid);
 
         // 分数
         int jid = StpUtil.getLoginIdAsInt();
         Score score = Score.builder().uid(scoreDTO.getUid())
-                .sid(districtScore.getId()).jid(jid)
-                .score(scoreDTO.getScore()).build();
+                .sid(scoreInfo.getId()).jid(jid)
+                .score(Integer.parseInt(scoreDTO.getScore())).build();
 
         if (process.equals(Process.PRACTICE)) {
 
-            //检验是否重复打分
+            // 检验是否重复打分
             int time = practicalScoreMapper.checkTime(uid, jid);
             if (time != 0) throw new RateException(ErrorMessageConstant.REPEATED_RATE);
 
-            //插入实战成绩
+            // 插入实战成绩
             practicalScoreMapper.insert(score);
-            //检查五位裁判是否打分完毕
-            int count = practicalScoreMapper.getCountByUidList(Collections.singletonList(uid));
-            if (count == 5) {
-                List<Integer> scores = practicalScoreMapper.getScoresByUid(uid);
-                int sum = 0;
-                for (Integer s : scores) sum += s;
-                // 插入评价分
-                districtScoreMapper.updatePracticalScoreByUid(uid, (float) sum / 5);
 
-                //判断30位选手是否全部打分完毕
-                UserInfo userInfo = userInfoMapper.getByUid(jid);
-                List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
-                count = practicalScoreMapper.getCountByUidList(uidList);
-                //该进程打分流程完毕
-                if (count == 150) {
-                    String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
-                    String value = RedisUtil.getProcessValue(Process.PRACTICE, Step.NEXT);
-                    stringRedisTemplate.opsForValue().set(key, value);
+            synchronized (JudgementServiceImpl.class) {
+                // 检查五位裁判是否打分完毕
+                int count = practicalScoreMapper.getCountByUidList(Collections.singletonList(uid));
+                if (count == 5) {
+                    List<Float> scores = practicalScoreMapper.getScoresByUid(uid);
+                    float sum = 0;
+                    for (Float s : scores) sum += s;
+                    // 插入平均分
+                    scoreInfoMapper.updatePracticalScoreByUid(uid, sum / 5);
+
+                    //判断30位选手是否全部打分完毕
+                    UserInfo userInfo = userInfoMapper.getByUid(uid);
+                    List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
+                    count = practicalScoreMapper.getCountByUidList(uidList);
+                    //该进程打分流程完毕
+                    if (count == 150) {
+                        String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
+                        String value = RedisUtil.getProcessValue(Process.PRACTICE, Step.NEXT);
+                        stringRedisTemplate.opsForValue().set(key, value);
+                    }
                 }
             }
         } else if (process.equals(Process.Q_AND_A)) {
 
-            //检验是否重复打分
+            // 检验是否重复打分
             int time = qAndAScoreMapper.checkTime(uid, jid);
             if (time != 0) throw new RateException(ErrorMessageConstant.REPEATED_RATE);
 
             // 插入问答成绩
             qAndAScoreMapper.insert(score);
-            //检查五位裁判是否打分完毕
-            int count = qAndAScoreMapper.getCountByUid(uid);
-            if (count == 5) {
-                List<Integer> scores = qAndAScoreMapper.getScoresByUid(uid);
-                int sum = 0;
-                for (Integer s : scores) sum += s;
-                // 插入平均分
-                districtScoreMapper.updateQAndAScoreByUid(uid, (float) sum / 5);
 
-                //判断30位选手是否全部打分完毕
-                UserInfo userInfo = userInfoMapper.getByUid(jid);
-                List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
-                count = qAndAScoreMapper.getCountByUidList(uidList);
-                //该进程打分流程完毕
-                if (count == 150) {
-                    String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
-                    String value = RedisUtil.getProcessValue(Process.Q_AND_A, Step.NEXT);
-                    stringRedisTemplate.opsForValue().set(key, value);
+            synchronized (JudgementServiceImpl.class) {
+                //检查五位裁判是否打分完毕
+                int count = qAndAScoreMapper.getCountByUidList(Collections.singletonList(uid));
+                if (count == 5) {
+                    List<Float> scores = qAndAScoreMapper.getScoresByUid(uid);
+                    float sum = 0;
+                    for (Float s : scores) sum += s;
+                    // 插入平均分
+                    scoreInfoMapper.updateQAndAScoreByUid(uid, sum / 5);
+
+                    // 计算总成绩
+                    UserInfo userInfo = userInfoMapper.getByUid(uid);
+                    calculateFinalScore(uid, userInfo.getZone());
+
+                    // 判断30位选手是否全部打分完毕
+                    List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
+                    count = qAndAScoreMapper.getCountByUidList(uidList);
+                    // 该进程打分流程完毕
+                    if (count == 150) {
+                        String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
+                        String value = RedisUtil.getProcessValue(Process.Q_AND_A, Step.NEXT);
+                        stringRedisTemplate.opsForValue().set(key, value);
+                    }
                 }
             }
         } else {
             throw new NoSuchProcessException(ErrorMessageConstant.NO_SUCH_PROCESS_EXCEPTION);
         }
+    }
+
+    // 计算最终成绩
+    public void calculateFinalScore(int uid, String zone) {
+        ScoreDAO score = scoreInfoMapper.getScoreDAOByUid(uid);
+        float finalScore;
+        if (zone.equals(Zone.N)) finalScore = score.getPracticalScore() / 2 + score.getQAndAScore() / 2;
+        else finalScore =
+                (score.getWrittenScore() + 2 * score.getPracticalScore() + 2 * score.getQAndAScore()) / 5;
+        scoreInfoMapper.updateFinalScore(uid, zone, finalScore);
     }
 }

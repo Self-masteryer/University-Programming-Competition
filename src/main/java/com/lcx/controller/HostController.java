@@ -1,17 +1,17 @@
 package com.lcx.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
-import cn.dev33.satoken.annotation.SaMode;
+import com.lcx.annotation.AfterCompetition;
 import com.lcx.annotation.CheckProcess;
 import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Step;
 import com.lcx.common.result.Result;
-import com.lcx.pojo.VO.DistrictScoreVO;
+import com.lcx.pojo.VO.WrittenScore;
 import com.lcx.pojo.VO.SeatInfo;
 import com.lcx.pojo.VO.SignGroup;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/host")
-@SaCheckRole(value = {"host", "admin"}, mode = SaMode.OR)
+@SaCheckRole(value = "host")
 @Slf4j
 public class HostController {
 
@@ -36,9 +36,9 @@ public class HostController {
 
     // 推进下一流程
     @GetMapping("/nextProcess")
-    public Result nextProcess(@NotEmpty String process) {
-        hostService.nextProcess(process);
-        return Result.success("已开启" + process + "流程");
+    public Result nextProcess() {
+        String nextProcess = hostService.nextProcess();
+        return Result.success("已推进至" + nextProcess + "环节");
     }
 
     // 座位号抽签
@@ -60,7 +60,7 @@ public class HostController {
     // 按笔试成绩筛选
     @GetMapping("/scoreFilter")
     @CheckProcess(process = Process.WRITTEN, step = Step.SCORE_FILTER)
-    public Result<List<DistrictScoreVO>> scoreFilter() {
+    public Result<List<WrittenScore>> scoreFilter() {
         return Result.success(hostService.scoreFilter());
     }
 
@@ -69,6 +69,14 @@ public class HostController {
     @CheckProcess(process = Process.PRACTICE, step = Step.GROUP_DRAW)
     public Result<List<SignGroup>> groupDraw() {
         return Result.success(hostService.groupDraw());
+    }
+
+    // 成绩导出
+    @GetMapping("/exportScoreToPdf")
+    @CheckProcess(process = Process.FINAL, step = Step.SCORE_EXPORT)
+    @AfterCompetition
+    public void exportScoreToPdf(HttpServletResponse response) {
+        hostService.exportScoreToPdf(response);
     }
 
 }
