@@ -1,13 +1,17 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.secure.BCrypt;
-import com.lcx.common.constant.Prize;
-import com.lcx.common.constant.Role;
-import com.lcx.common.constant.Time;
-import com.lcx.common.constant.Zone;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.lcx.common.constant.*;
+import com.lcx.common.constant.Process;
+import com.lcx.common.exception.process.ProcessStatusError;
+import com.lcx.common.result.PageResult;
 import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RandomStringUtils;
+import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
+import com.lcx.pojo.DTO.StudentScorePageQuery;
 import com.lcx.pojo.DTO.SignUpTime;
 import com.lcx.pojo.Entity.*;
 import com.lcx.pojo.VO.ScoreVo;
@@ -18,7 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.BeanUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +31,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class AdminServiceImpl implements AdminService {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminServiceImpl.class);
     @Resource
     private UserInfoMapper userInfoMapper;
     @Resource
@@ -48,15 +54,13 @@ public class AdminServiceImpl implements AdminService {
     @Resource
     private ScoreInfoMapper scoreInfoMapper;
     @Resource
-    private PreScoreMapper preScoreMapper;
-    @Resource
     private QAndAScoreMapper qAndAScoreMapper;
     @Resource
     private PracticalScoreMapper practicalScoreMapper;
 
     @Override
     @Transactional
-    public void createUserByExcel(MultipartFile file, HttpServletResponse response) {
+    public void addUserByExcel(MultipartFile file, HttpServletResponse response) {
         try {
             InputStream in = file.getInputStream();
             XSSFWorkbook inExcel = new XSSFWorkbook(in);
@@ -140,7 +144,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public void createSchoolByExcel(MultipartFile file, HttpServletResponse response) {
+    public void addSchoolByExcel(MultipartFile file, HttpServletResponse response) {
         try {
             InputStream in = file.getInputStream();
             XSSFWorkbook inExcel = new XSSFWorkbook(in);
@@ -201,24 +205,42 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void setSignUpTime(SignUpTime signUpTime) {
         //设置报名时间
         String begin = ConvertUtil.parseDateStr(signUpTime.getBegin());
         String end = ConvertUtil.parseDateStr(signUpTime.getEnd());
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_BEGIN_TIME, begin);
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_END_TIME, end);
-    }
 
-    public void setToTourist() {
+        // 将比赛设置为区赛
+        stringRedisTemplate.opsForValue().set("competition", "district");
+
+        //届数加一
+        int session = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get("session")));
+        stringRedisTemplate.opsForValue().set("session", String.valueOf(session + 1));
     }
 
     @Override
+    @Transactional
+    public void startNationalCompetition() {
+        // 判断区赛是否全部结束
+        int count = contestantMapper.getCountByGroupAndZone(null, Zone.N);
+        if (count != 60)
+            throw new ProcessStatusError(ErrorMessageConstant.DISTRICT_IS_ONGOING);
+
+        // 将比赛设置为国赛
+        stringRedisTemplate.opsForValue().set("competition", "national");
+    }
+
+    @Override
+    @Transactional
     public void addStudentScore(String group, String zone) {
         List<ScoreVo> scoreInfoList = contestantMapper
                 .getScoreVoListByGroupAndZone(group, zone);
         scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
 
-        int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
+        int session = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get("session")));
         for (int i = 0; i < 5; i++) {
             ScoreVo scoreVo = scoreInfoList.get(i);
             StudentScore studentScore = StudentScore.builder().name(scoreVo.getName()).idCard(scoreVo.getIdCard())
@@ -231,45 +253,36 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public void addToNational(String group, String zone) {
-        List<ScoreVo> scoreInfoList = contestantMapper
-                .getScoreVoListByGroupAndZone(group, zone);
-        scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
-
-        for (int i = 0; i < 5; i++) {
-            ScoreVo scoreVo = scoreInfoList.get(i);
-            Contestant contestant = Contestant.builder().uid(userInfoMapper.getUidByIDCard(scoreVo.getIdCard()))
-                    .name(scoreVo.getName()).school(scoreVo.getSchool()).idCard(scoreVo.getIdCard())
-                    .group(scoreVo.getGroup()).zone(Zone.N).build();
-
-            contestantMapper.insert(contestant);
-        }
-    }
-
-    @Override
-    public void addPreScore(String group, String zone) {
-        List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
-        List<ScoreInfo> scoreInfoList = new ArrayList<>();
-        for (Integer uid : uidList) scoreInfoList.add(scoreInfoMapper.getByUid(uid));
-        scoreInfoList.sort(Comparator.comparingDouble(ScoreInfo::getFinalScore).reversed());
-        for (int i = 0; i < scoreInfoList.size(); i++) {
-            ScoreInfo scoreInfo = scoreInfoList.get(i);
-            PreScore preScore = new PreScore();
-            BeanUtils.copyProperties(scoreInfo, preScore);
-            preScore.setRanking(i + 1);
-
-            preScoreMapper.insert(preScore);
-        }
-    }
-
-    @Override
+    @Transactional
     public void deleteScore(String group, String zone) {
         List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
-        for(Integer uid : uidList) {
+        for (Integer uid : uidList) {
             scoreInfoMapper.deleteByUid(uid);
             practicalScoreMapper.deleteByUid(uid);
             qAndAScoreMapper.deleteByUid(uid);
-            contestantMapper.deleteByUidAndZone(uid,zone);
+            contestantMapper.deleteByUidAndZone(uid, zone);
         }
     }
+
+    @Override
+    @Transactional
+    public void setAsTourist(String group, String zone) {
+        List<Integer> uidList = userInfoMapper.getUidListByGroupAndZone(group, zone);
+        for (Integer uid : uidList) updateRole(uid, Role.TOURIST);
+    }
+
+    @Override
+    @Transactional
+    public PageResult pageQueryStudentScore(StudentScorePageQuery studentScorePageQuery) {
+        PageHelper.startPage(studentScorePageQuery.getPageNo(), studentScorePageQuery.getPageSize());
+        Page<StudentScore> page = studentScoreMapper.pageQuery(studentScorePageQuery);
+        return new PageResult(page.getTotal(), page.getResult());
+    }
+
+    @Override
+    @Transactional
+    public void updateRole(int uid, int rid) {
+        userMapper.updateRole(uid, rid);
+    }
+
 }

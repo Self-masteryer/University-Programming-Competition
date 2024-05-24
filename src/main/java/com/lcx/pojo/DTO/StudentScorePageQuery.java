@@ -1,5 +1,6 @@
-package com.lcx.pojo.Entity;
+package com.lcx.pojo.DTO;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,13 +10,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class StudentScore {
-    private int id;
+public class StudentScorePageQuery {
+    @NotNull
+    private int pageSize;
+    @NotNull
+    private int pageNo;
+
     private String name;
     private String school;
-    private String idCard;
     private int session;
-    private float score;
     private String prize;
-
 }

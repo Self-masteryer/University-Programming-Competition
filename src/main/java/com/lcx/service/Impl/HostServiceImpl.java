@@ -1,6 +1,5 @@
 package com.lcx.service.Impl;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.*;
 import com.lcx.common.constant.*;
@@ -11,12 +10,10 @@ import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.ScoreInfoMapper;
-import com.lcx.mapper.UserInfoMapper;
 import com.lcx.mapper.UserMapper;
 import com.lcx.pojo.Entity.Contestant;
 import com.lcx.pojo.Entity.ScoreInfo;
 import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.Entity.UserInfo;
 import com.lcx.pojo.VO.WrittenScore;
 import com.lcx.pojo.VO.ScoreVo;
 import com.lcx.pojo.VO.SeatInfo;
@@ -45,8 +42,6 @@ public class HostServiceImpl implements HostService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
-    private UserInfoMapper userInfoMapper;
-    @Resource
     private ContestantMapper contestantMapper;
     @Resource
     private ScoreInfoMapper scoreInfoMapper;
@@ -56,7 +51,7 @@ public class HostServiceImpl implements HostService {
     // 开启比赛
     @Override
     @Transactional
-    public void startCompetition() {
+    public void startCompetition(String group,String zone) {
         // 判断报名是否已结束
         String instantStr = stringRedisTemplate.opsForValue().get(Time.SIGN_UP_END_TIME);
         if (instantStr == null) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
@@ -64,10 +59,6 @@ public class HostServiceImpl implements HostService {
         long now = System.currentTimeMillis();
         if (now < end) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
 
-        // 获得组别、赛区信息
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        String group = userInfo.getGroup();
-        String zone = userInfo.getZone();
         // 判断比赛是否已经进行
         String key = RedisUtil.getProcessKey(group, zone);
         String value = stringRedisTemplate.opsForValue().get(key);
@@ -79,19 +70,15 @@ public class HostServiceImpl implements HostService {
         value = RedisUtil.getProcessValue(Process.WRITTEN, Step.SEAT_DRAW);
         stringRedisTemplate.opsForValue().set(key, value);
 
-        //届数加一
-        int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
-        stringRedisTemplate.opsForValue().set("session", String.valueOf(session + 1));
     }
 
     // 推进下一流程
     @Override
     @Transactional
-    public String nextProcess() {
+    public String nextProcess(String group,String zone) {
 
         // 获得当前环节
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        String key = RedisUtil.getProcessKey(userInfo.getGroup(), userInfo.getZone());
+        String key = RedisUtil.getProcessKey(group, zone);
         String value = stringRedisTemplate.opsForValue().get(key);
         // 比赛未开启
         if (value == null)
@@ -152,11 +139,7 @@ public class HostServiceImpl implements HostService {
     // 座位号抽签
     @Override
     @Transactional
-    public List<SeatInfo> seatDraw() {
-        // 获取组别、赛区信息
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        String group = userInfo.getGroup();
-        String zone = userInfo.getZone();
+    public List<SeatInfo> seatDraw(String group ,String zone) {
 
         // 座位号抽签
         int count = contestantMapper.getCountByGroupAndZone(group, zone); // 组别赛区选手总数
@@ -168,8 +151,8 @@ public class HostServiceImpl implements HostService {
         List<SeatInfo> seatTable = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Contestant contestant = list.get(i);
-            int session = Integer.parseInt(stringRedisTemplate.opsForValue().get("session"));
-            ScoreInfo scoreInfo = ScoreInfo.builder().uid(contestant.getUid())
+            int session = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get("session")));
+            ScoreInfo scoreInfo = ScoreInfo.builder().uid(contestant.getUid()).group(contestant.getGroup())
                     .session(session).zone(contestant.getZone()).build();
             String seatNum = group + ":" + zone + ":" + nums.get(i);
             scoreInfo.setSeatNum(seatNum);
@@ -187,12 +170,10 @@ public class HostServiceImpl implements HostService {
     // 按笔试成绩筛选
     @Override
     @Transactional
-    public List<WrittenScore> scoreFilter() {
-        //获得用户信息
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
+    public List<WrittenScore> scoreFilter(String group ,String zone) {
         // 查询成绩单
         List<WrittenScore> scores = scoreInfoMapper
-                .getVOListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
+                .getVOListByGroupAndZone(group, zone);
         // 按笔试成绩降序排序
         scores.sort(Comparator.comparingInt(WrittenScore::getWrittenScore).reversed());
         //人数不满30人，直接返回
@@ -210,12 +191,11 @@ public class HostServiceImpl implements HostService {
         return scores;
     }
 
+    // 分组抽签
     @Override
     @Transactional
-    public List<SignGroup> groupDraw() {
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        List<Student> students = contestantMapper
-                .getStudentListByGroupAndZone(userInfo.getGroup(), userInfo.getZone());
+    public List<SignGroup> groupDraw(String group ,String zone) {
+        List<Student> students = contestantMapper.getStudentListByGroupAndZone(group, zone);
         // 分组信息
         List<SignGroup> signGroups = groupDraw(students);
         // 更新成绩单信息
@@ -226,13 +206,10 @@ public class HostServiceImpl implements HostService {
         return signGroups;
     }
 
+    //导出成绩
     @Override
     @Transactional
-    public void exportScoreToPdf(HttpServletResponse response) {
-        // 获得选手成绩信息
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        String group = userInfo.getGroup();
-        String zone = userInfo.getZone();
+    public void exportScoreToPdf(String group ,String zone,HttpServletResponse response) {
         List<ScoreVo> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
         // 降序排序
         scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
@@ -244,6 +221,7 @@ public class HostServiceImpl implements HostService {
         InputStream in = this.getClass().getClassLoader()
                 .getResourceAsStream("templates/高校编程能力大赛成绩导出模板.pdf");
         try {
+            assert in != null;
             PdfReader reader = new PdfReader(in);
             ServletOutputStream out = response.getOutputStream();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -252,22 +230,25 @@ public class HostServiceImpl implements HostService {
 
             // 给表单添加中文字体
             BaseFont baseFont = BaseFont.createFont(
-                    "D:\\develop\\idea\\University-Programming-Competition\\src\\main\\resources\\fonts\\Deng.ttf"
-                    , BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                    "src/main/resources/fonts/Deng.ttf"
+                    , BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
             form.addSubstitutionFont(baseFont);
 
+//            for (String k : form.getFields().keySet())
+//                form.setFieldProperty(k, "deng", baseFont, null);
+
             // 插入数据
-            int count = 1;
+            int i = 1;
             String key = "fill_";
             for (ScoreVo score : scoreInfoList) {
-                form.setField(key + count, score.getName());count++;
-                form.setField(key + count, group);count++;
-                form.setField(key + count, zone);count++;
-                form.setField(key + count, score.getSeatNum());count++;
-                form.setField(key + count, String.valueOf(score.getWrittenScore()));count++;
-                form.setField(key + count, String.valueOf(score.getPracticalScore()));count++;
-                form.setField(key + count, String.valueOf(score.getQAndAScore()));count++;
-                form.setField(key + count, String.valueOf(score.getFinalScore()));count++;
+                form.setField(key + i, score.getName());i++;
+                form.setField(key + i, group);i++;
+                form.setField(key + i, zone);i++;
+                form.setField(key + i, score.getSeatNum());i++;
+                form.setField(key + i, String.valueOf(score.getWrittenScore()));i++;
+                form.setField(key + i, String.valueOf(score.getPracticalScore()));i++;
+                form.setField(key + i, String.valueOf(score.getQAndAScore()));i++;
+                form.setField(key + i, String.valueOf(score.getFinalScore()));i++;
             }
 
             // 如果为false那么生成的PDF文件还能编辑

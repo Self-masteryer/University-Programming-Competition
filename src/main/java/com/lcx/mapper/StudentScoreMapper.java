@@ -1,5 +1,7 @@
 package com.lcx.mapper;
 
+import com.github.pagehelper.Page;
+import com.lcx.pojo.DTO.StudentScorePageQuery;
 import com.lcx.pojo.Entity.StudentScore;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,4 +13,5 @@ public interface StudentScoreMapper {
             "value (#{name},#{school},#{idCard},#{session},#{score},#{prize})")
     void insert(StudentScore studentScore);
 
+    Page<StudentScore> pageQuery(StudentScorePageQuery studentScorePageQuery);
 }

@@ -1,4 +1,4 @@
-package com.lcx.pojo.Entity;
+package com.lcx.pojo.VO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ScoreInfo {
+public class PreScoreVO {
 
-    private int id;
-    private int uid;
+    private String name;
     private int session;// 届数
     private String group;// 组别
     private String zone;// 赛区
@@ -22,4 +21,5 @@ public class ScoreInfo {
     private float practicalScore;// 实战成绩
     private float qAndAScore;// 快问快打成绩
     private float finalScore;// 最终成绩
+    private int ranking;// 排名
 }

@@ -40,4 +40,12 @@
         from contestant c,score_info s where c.uid=s.uid and c.`group`=#{group} and c.zone=#{zone};
     </select>
 
+    <select id="getCountByGroupAndZone" resultType="java.lang.Integer">
+        select count(id) from contestant
+        <where>
+            <if test="group!=null and group!=''">and `group`=#{group}</if>
+            <if test="zone!=null and zone!=''">and zone=#{zone}</if>
+        </where>
+    </select>
+
 </mapper>

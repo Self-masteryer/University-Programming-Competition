@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.lcx.mapper.PreScoreMapper">
+
+    <select id="pageQuery" resultType="com.lcx.pojo.VO.PreScoreVO">
+        select u.name,p.`group`,p.zone,p.seat_num,p.sign_num,p.session,p.ranking,p.written_score,p.practical_score,p.q_and_a_score,p.final_score
+        from pre_score p,user_info u
+        <where>
+            p.uid=u.uid
+            <if test=" name!=null and name!='' ">and u.name like concat('%',#{name},'%')</if>
+            <if test=" zone!=null and zone!='' ">and p.zone=#{zone}</if>
+            <if test=" group!=null and group!='' ">and p.`group`=#{group}</if>
+            <if test="session!=0">and p.session=#{session}</if>
+            <if test="ranking!=0">and ranking=#{ranking}</if>
+        </where>
+        order by final_score desc
+    </select>
+
+</mapper>

@@ -10,17 +10,17 @@ import java.util.List;
 
 public interface HostService {
 
-    void startCompetition();
+    void startCompetition(String group ,String zone);
 
-    String nextProcess();
+    String nextProcess(String group ,String zone);
 
     void postWrittenScoreByExcel(MultipartFile file);
 
-    List<SeatInfo> seatDraw();
+    List<SeatInfo> seatDraw(String group ,String zone);
 
-    List<WrittenScore> scoreFilter();
+    List<WrittenScore> scoreFilter(String group ,String zone);
 
-    List<SignGroup> groupDraw();
+    List<SignGroup> groupDraw(String group ,String zone);
 
-    void exportScoreToPdf(HttpServletResponse response);
+    void exportScoreToPdf(String group ,String zone,HttpServletResponse response);
 }

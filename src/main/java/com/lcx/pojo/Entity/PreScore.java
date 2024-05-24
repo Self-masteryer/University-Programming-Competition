@@ -14,6 +14,7 @@ public class PreScore {
     private int id;
     private int uid;
     private int session;// 届数
+    private String group;// 组别
     private String zone;// 赛区
     private String seatNum;// 座位号
     private String signNum;// 签号

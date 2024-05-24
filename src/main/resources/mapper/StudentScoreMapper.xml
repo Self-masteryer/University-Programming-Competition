@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.lcx.mapper.StudentScoreMapper">
+
+
+    <select id="pageQuery" resultType="com.lcx.pojo.Entity.StudentScore">
+        select * from student_score
+        <where>
+            <if test=" name != null and name !=''">and name like concat('%',#{name},'%')</if>
+            <if test="school!=null and school!=''">and school like concat('%',#{school},'%')</if>
+            <if test="session!=0">and session=#{session}</if>
+            <if test="prize!=null and prize!=''">and prize=#{prize}</if>
+        </where>
+        order by score desc
+    </select>
+</mapper>

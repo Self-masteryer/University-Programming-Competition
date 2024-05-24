@@ -15,10 +15,10 @@ public class ErrorMessageConstant {
     public static final String COMPETITION_HAS_BEGUN = "比赛已经开始";
     public static final String COMPETITION_HAS__NOT_BEGUN = "比赛还没开始";
     public static final String NO_SUCH_PROCESS_EXCEPTION = "没有这样的进程异常";
-    public static final String PROCESS_SEQUENCE_ERROR = "进程顺序错误";
     public static final String PROCESS_STATUS_ERROR = "进程状态错误";
 
     public static final String SIGN_NUM_OUT_OF_BOUND = "组号范围错误";
     public static final String REPEATED_RATE = "重复打分";
 
+    public static final String DISTRICT_IS_ONGOING = "区赛还在进行中";
 }

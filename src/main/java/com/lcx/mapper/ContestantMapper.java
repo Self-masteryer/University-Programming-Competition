@@ -24,7 +24,6 @@ public interface ContestantMapper {
 
     void update(Contestant contestant);
 
-    @Select("select count(id) from contestant where `group`=#{group} and zone=#{zone}")
     int getCountByGroupAndZone(String group, String zone);
 
     @Select("select * from contestant where `group`=#{group} and zone=#{zone}")

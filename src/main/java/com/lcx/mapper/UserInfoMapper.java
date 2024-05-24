@@ -5,6 +5,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface UserInfoMapper {
     @Select("select * from user_info where id_card=#{idCard}")
@@ -21,4 +23,7 @@ public interface UserInfoMapper {
 
     @Select("select uid from user_info where id_card=#{idCard}")
     int getUidByIDCard(String idCard);
+
+    @Select("select uid from user_info where `group`=#{group} and zone=#{zone}")
+    List<Integer> getUidListByGroupAndZone(String group, String zone);
 }
