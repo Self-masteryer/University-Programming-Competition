@@ -6,6 +6,7 @@ import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Step;
 import com.lcx.common.result.Result;
 import com.lcx.pojo.DTO.ScoreDTO;
+import com.lcx.pojo.Entity.Student;
 import com.lcx.pojo.VO.SignGroup;
 import com.lcx.service.JudgementService;
 import jakarta.annotation.Resource;
@@ -33,15 +34,22 @@ public class judgementController {
     @PostMapping("/practiceRate")
     @CheckProcess(process = Process.PRACTICE, step = Step.RATE)
     public Result practiceRate(@RequestBody @Validated ScoreDTO scoreDTO) {
-        judgementService.rate(scoreDTO,Process.PRACTICE);
+        judgementService.practiceRate(scoreDTO);
         return Result.success("实战环节评分成功!");
+    }
+
+    // 查询快问快答选手
+    @GetMapping("/contestant/{num}")
+    @CheckProcess(step = Step.RATE)
+    public Result<Student> getContestant(@PathVariable int num) {
+        return Result.success(judgementService.getContestant(num));
     }
 
     // 快问快答打分
     @PostMapping("/qAndARate")
     @CheckProcess(process = Process.Q_AND_A, step = Step.RATE)
     public Result qAndARate(@RequestBody @Validated ScoreDTO scoreDTO) {
-        judgementService.rate(scoreDTO,Process.Q_AND_A);
+        judgementService.qAndARate(scoreDTO);
         return Result.success("问答环节评分成功!");
     }
 

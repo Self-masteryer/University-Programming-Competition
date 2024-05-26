@@ -17,7 +17,7 @@ public class User {
 
     private String password ;
 
-    private String name ;
+    private String nickname ;
 
     private Integer rid ;
 
@@ -25,4 +25,5 @@ public class User {
 
     private Integer enabled ;
 
+    private Integer usernameModifiable;
 }

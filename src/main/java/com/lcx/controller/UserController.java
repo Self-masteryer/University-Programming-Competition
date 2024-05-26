@@ -1,11 +1,15 @@
 package com.lcx.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
-import cn.dev33.satoken.annotation.SaIgnore;
-import cn.dev33.satoken.stp.StpUtil;
+import com.lcx.common.constant.ErrorMessageConstant;
 import com.lcx.common.result.Result;
+import com.lcx.common.util.AliOssUtil;
+import com.lcx.pojo.DTO.ChangePwdDTO;
+import com.lcx.pojo.Entity.AccountInfo;
+import com.lcx.pojo.DTO.ResetAccountDTO;
 import com.lcx.pojo.DTO.UserLoginDTO;
 import com.lcx.pojo.VO.PreScoreVO;
+import com.lcx.pojo.VO.SingleScoreVO;
+import com.lcx.service.ContestantService;
 import com.lcx.service.ScoreService;
 import com.lcx.service.UserService;
 import jakarta.annotation.Resource;
@@ -13,12 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
-@SaCheckLogin
 @Slf4j
 public class UserController {
 
@@ -26,13 +32,14 @@ public class UserController {
     private UserService userService;
     @Resource
     private ScoreService scoreService;
+    @Resource
+    private AliOssUtil aliOssUtil;
+    @Resource
+    private ContestantService contestantService;
 
-    @SaIgnore
     @PostMapping("/login")
     public Result login(@RequestBody @Validated UserLoginDTO userLoginDTO) {
-        //登录，成功则返回id
-        int id = userService.login(userLoginDTO);
-        StpUtil.login(id);
+        userService.login(userLoginDTO);
         return Result.success("登录成功");
     }
 
@@ -40,5 +47,55 @@ public class UserController {
     @GetMapping("/myPreScore")
     public Result<List<PreScoreVO>> queryMyPreScore() {
         return Result.success(scoreService.queryMyPreScore());
+    }
+
+    // 查询笔试成绩
+    @GetMapping("/writtenScore")
+    public Result<SingleScoreVO> getWrittenScore() {
+        return Result.success(contestantService.getWrittenScore());
+    }
+
+    // 重置用户名、密码
+    @PutMapping("/usernameAndPassword")
+    public Result resetUsernameAndPassword(@RequestBody @Validated ResetAccountDTO resetAccountDTO) {
+        userService.resetUsernameAndPassword(resetAccountDTO);
+        return Result.success("账号密码修改成功,请重新登录");
+    }
+
+    // 修改密码
+    @PutMapping("/password")
+    public Result changePwd(@RequestBody @Validated ChangePwdDTO changePwdDTO) {
+        userService.changePwd(changePwdDTO);
+        return Result.success("密码修改成功，请重新登录");
+    }
+
+    // 查询信息
+    @GetMapping("/info")
+    public Result<AccountInfo> getInfo() {
+        return Result.success(userService.getInfo());
+    }
+
+    // 修改信息
+    @PutMapping("/info")
+    public Result updateInfo(@RequestBody @Validated AccountInfo accountInfo) {
+        userService.updateInfo(accountInfo);
+        return Result.success("修改信息成功");
+    }
+
+    // 上传文件
+    @PostMapping("/upload")
+    public Result upload(MultipartFile file) {
+        try {
+            String originalFileName = file.getOriginalFilename();
+            String suffix = null;
+            if (originalFileName != null)
+                suffix = originalFileName.substring(originalFileName.lastIndexOf("."));
+            String newFileName = UUID.randomUUID() + suffix;
+            String filePath = aliOssUtil.upload(file.getBytes(), newFileName);
+            return Result.success(filePath);
+        } catch (IOException e) {
+            log.info("文件上传失败：{}", e.getMessage());
+        }
+        return Result.error(ErrorMessageConstant.UPLOAD_FAILED);
     }
 }

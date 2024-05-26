@@ -3,10 +3,20 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.lcx.mapper.ScoreInfoMapper">
 
-    <select id="getVOListByGroupAndZone" resultType="com.lcx.pojo.VO.WrittenScore">
-        select c.name,c.`group`,c.zone,ds.seat_num,ds.written_score
+    <select id="getWrittenScoreList" resultType="com.lcx.pojo.Entity.SingleScore">
+        select c.uid,c.name,ds.`group`,ds.zone,ds.seat_num,ds.written_score as score
         from score_info ds left outer join contestant c on c.uid=ds.uid
-        where c.`group`=#{group} and c.zone=#{zone};
+        where ds.`group`=#{group} and ds.zone=#{zone};
+    </select>
+
+    <select id="getPracticalScoreByUid" resultType="com.lcx.pojo.VO.CommonScore">
+        select c.uid,c.name,s.practical_score as score from contestant c,score_info s
+        where c.uid=s.uid and c.uid=#{uid};
+    </select>
+
+    <select id="getQAndAScoreByUid" resultType="com.lcx.pojo.VO.CommonScore">
+        select c.uid,c.name,s.q_and_a_score as score from contestant c,score_info s
+        where c.uid=s.uid and c.uid=#{uid};
     </select>
 
 </mapper>

@@ -2,6 +2,10 @@ package com.lcx.common.constant;
 
 public class Zone {
 
+    public static final String ZONE = "zone";
+
+    public static final String[] DISTRICT_ZONES = {"NW","SW","NE","SE","C","E"};
+
     public static final String NORTH_WEST = "西北赛区";
     public static final String SOUTH_WEST = "西南赛区";
     public static final String NORTH_EASE = "东北赛区";

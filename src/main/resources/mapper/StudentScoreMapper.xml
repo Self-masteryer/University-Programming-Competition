@@ -9,7 +9,7 @@
         <where>
             <if test=" name != null and name !=''">and name like concat('%',#{name},'%')</if>
             <if test="school!=null and school!=''">and school like concat('%',#{school},'%')</if>
-            <if test="session!=0">and session=#{session}</if>
+            <if test="session!=null">and session=#{session}</if>
             <if test="prize!=null and prize!=''">and prize=#{prize}</if>
         </where>
         order by score desc

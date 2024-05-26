@@ -1,5 +1,6 @@
 package com.lcx.service.Impl;
 
+import com.alibaba.fastjson2.JSON;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.*;
 import com.lcx.common.constant.*;
@@ -8,16 +9,9 @@ import com.lcx.common.exception.process.ProcessStatusError;
 import com.lcx.common.exception.process.StartCompetitionException;
 import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RedisUtil;
-import com.lcx.mapper.ContestantMapper;
-import com.lcx.mapper.ScoreInfoMapper;
-import com.lcx.mapper.UserMapper;
-import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.Entity.ScoreInfo;
-import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.WrittenScore;
-import com.lcx.pojo.VO.ScoreVo;
-import com.lcx.pojo.VO.SeatInfo;
-import com.lcx.pojo.VO.SignGroup;
+import com.lcx.mapper.*;
+import com.lcx.pojo.Entity.*;
+import com.lcx.pojo.VO.*;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
@@ -47,11 +41,15 @@ public class HostServiceImpl implements HostService {
     private ScoreInfoMapper scoreInfoMapper;
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private WrittenScoreMapper writtenScoreMapper;
+    @Resource
+    private UserInfoMapper userInfoMapper;
 
-    // 开启比赛
+    // 开启区赛
     @Override
     @Transactional
-    public void startCompetition(String group,String zone) {
+    public void startCompetition(String group, String zone) {
         // 判断报名是否已结束
         String instantStr = stringRedisTemplate.opsForValue().get(Time.SIGN_UP_END_TIME);
         if (instantStr == null) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
@@ -65,6 +63,9 @@ public class HostServiceImpl implements HostService {
         if (value != null)
             throw new StartCompetitionException(ErrorMessageConstant.COMPETITION_HAS_BEGUN);
 
+        // 插入成绩信息
+        insertScoreInfo(group, zone);
+
         log.info("{}:{} 比赛开始", group, zone);
         // 将比赛进程存进redis
         value = RedisUtil.getProcessValue(Process.WRITTEN, Step.SEAT_DRAW);
@@ -75,7 +76,7 @@ public class HostServiceImpl implements HostService {
     // 推进下一流程
     @Override
     @Transactional
-    public String nextProcess(String group,String zone) {
+    public String nextProcess(String group, String zone) {
 
         // 获得当前环节
         String key = RedisUtil.getProcessKey(group, zone);
@@ -139,7 +140,7 @@ public class HostServiceImpl implements HostService {
     // 座位号抽签
     @Override
     @Transactional
-    public List<SeatInfo> seatDraw(String group ,String zone) {
+    public List<SeatInfo> seatDraw(String group, String zone) {
 
         // 座位号抽签
         int count = contestantMapper.getCountByGroupAndZone(group, zone); // 组别赛区选手总数
@@ -151,17 +152,13 @@ public class HostServiceImpl implements HostService {
         List<SeatInfo> seatTable = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Contestant contestant = list.get(i);
-            int session = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get("session")));
-            ScoreInfo scoreInfo = ScoreInfo.builder().uid(contestant.getUid()).group(contestant.getGroup())
-                    .session(session).zone(contestant.getZone()).build();
             String seatNum = group + ":" + zone + ":" + nums.get(i);
-            scoreInfo.setSeatNum(seatNum);
-            scoreInfoMapper.insert(scoreInfo);
+            scoreInfoMapper.updateSeatNum(contestant.getUid(), seatNum);
             //座位信息
             SeatInfo seatInfo = SeatInfo.builder().name(contestant.getName()).seatNum(seatNum).build();
             seatTable.add(seatInfo);
         }
-        //按座位号排序
+        //按座位号升序排序
         seatTable.sort(Comparator.comparingInt(o -> Integer.parseInt(o.getSeatNum().substring(6))));
 
         return seatTable;
@@ -170,22 +167,32 @@ public class HostServiceImpl implements HostService {
     // 按笔试成绩筛选
     @Override
     @Transactional
-    public List<WrittenScore> scoreFilter(String group ,String zone) {
+    public List<SingleScore> scoreFilter(String group, String zone) {
         // 查询成绩单
-        List<WrittenScore> scores = scoreInfoMapper
-                .getVOListByGroupAndZone(group, zone);
+        List<SingleScore> scores = scoreInfoMapper
+                .getWrittenScoreList(group, zone);
         // 按笔试成绩降序排序
-        scores.sort(Comparator.comparingInt(WrittenScore::getWrittenScore).reversed());
+        scores.sort(Comparator.comparingInt(SingleScore::getScore).reversed());
+
+        // 添加到written_score表
+        for (int i = 0; i < scores.size(); i++) {
+            SingleScore singleScore = scores.get(i);
+            singleScore.setRanking(i + 1);
+            writtenScoreMapper.insert(singleScore);
+        }
+
         //人数不满30人，直接返回
         if (scores.size() <= 30) return scores;
-        // 将淘汰选手的账号身份设置为游客，只能查询往年成绩
+        // 将淘汰选手的账号身份设置为游客，只能查询往年成绩、笔试成绩
         for (int i = 30; i < scores.size(); i++) {
-            WrittenScore writtenScore = scores.get(i);
-            ScoreInfo scoreInfo = scoreInfoMapper.getBySeatNum(writtenScore.getSeatNum());
+            int uid = scores.get(i).getUid();
 
-            userMapper.updateRole(scoreInfo.getUid(), Role.TOURIST);// 设置成游客身份
-            contestantMapper.deleteByUid(scoreInfo.getUid());// 删除选手
-            scoreInfoMapper.deleteByUid(scoreInfo.getUid());// 删除成绩
+            userMapper.updateRole(uid, Role.TOURIST);// 设置成游客身份
+            UserInfo userInfo = UserInfo.builder().uid(uid).group("").zone("").build();
+            userInfoMapper.update(userInfo);// 更新用户信息
+
+            contestantMapper.deleteByUid(uid);// 删除选手
+            scoreInfoMapper.deleteByUid(uid);// 删除成绩
         }
         // 返回晋级选手成绩单
         return scores;
@@ -194,11 +201,18 @@ public class HostServiceImpl implements HostService {
     // 分组抽签
     @Override
     @Transactional
-    public List<SignGroup> groupDraw(String group ,String zone) {
+    public List<SignGroup> groupDraw(String group, String zone) {
         List<Student> students = contestantMapper.getStudentListByGroupAndZone(group, zone);
         // 分组信息
         List<SignGroup> signGroups = groupDraw(students);
-        // 更新成绩单信息
+
+        // 序列化
+        String jasonStr= JSON.toJSONString(signGroups);
+        String key=RedisUtil.getSignGroupsKey(group,zone);
+        // 将分组信息存进redis
+        stringRedisTemplate.opsForValue().set(key,jasonStr);
+
+        // 更新成绩信息
         for (SignGroup signGroup : signGroups) {
             scoreInfoMapper.updateSignNumByUid(signGroup.getA().getUid(), "A" + signGroup.getSignNum());
             scoreInfoMapper.updateSignNumByUid(signGroup.getB().getUid(), "B" + signGroup.getSignNum());
@@ -209,10 +223,10 @@ public class HostServiceImpl implements HostService {
     //导出成绩
     @Override
     @Transactional
-    public void exportScoreToPdf(String group ,String zone,HttpServletResponse response) {
-        List<ScoreVo> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
+    public void exportScoreToPdf(String group, String zone, HttpServletResponse response) {
+        List<ScoreVO> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
         // 降序排序
-        scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
+        scoreInfoList.sort(Comparator.comparingDouble(ScoreVO::getFinalScore).reversed());
 
         // 将group,zone转换为中文
         group = ConvertUtil.parseGroupStr(group);
@@ -240,7 +254,7 @@ public class HostServiceImpl implements HostService {
             // 插入数据
             int i = 1;
             String key = "fill_";
-            for (ScoreVo score : scoreInfoList) {
+            for (ScoreVO score : scoreInfoList) {
                 form.setField(key + i, score.getName());i++;
                 form.setField(key + i, group);i++;
                 form.setField(key + i, zone);i++;
@@ -327,6 +341,29 @@ public class HostServiceImpl implements HostService {
             }
         }
         return signGroups;
+    }
+
+    @Override
+    public void insertScoreInfo(String group, String zone) {
+        List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
+        for (Integer uid : uidList) {
+            String session = stringRedisTemplate.opsForValue().get("session");
+            ScoreInfo scoreInfo = ScoreInfo.builder().uid(uid).group(group)
+                    .zone(zone).session(session).build();
+            scoreInfoMapper.insert(scoreInfo);
+        }
+    }
+
+    @Override
+    public GroupScore getGroupScore(int aUid, int bUid) {
+    CommonScore A = scoreInfoMapper.getPracticalScoreByUid(aUid);
+        CommonScore B = scoreInfoMapper.getPracticalScoreByUid(bUid);
+        return GroupScore.builder().A(A).B(B).build();
+    }
+
+    @Override
+    public CommonScore getQAndAScore(int uid) {
+        return scoreInfoMapper.getQAndAScoreByUid(uid);
     }
 
 }

@@ -11,8 +11,8 @@
             <if test=" name!=null and name!='' ">and u.name like concat('%',#{name},'%')</if>
             <if test=" zone!=null and zone!='' ">and p.zone=#{zone}</if>
             <if test=" group!=null and group!='' ">and p.`group`=#{group}</if>
-            <if test="session!=0">and p.session=#{session}</if>
-            <if test="ranking!=0">and ranking=#{ranking}</if>
+            <if test="session!=null">and p.session=#{session}</if>
+            <if test="ranking!=null">and ranking=#{ranking}</if>
         </where>
         order by final_score desc
     </select>

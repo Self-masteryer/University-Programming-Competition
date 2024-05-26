@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ScoreVo {
+public class ScoreVO {
 
     private String name;// 姓名
     private String school;// 学校

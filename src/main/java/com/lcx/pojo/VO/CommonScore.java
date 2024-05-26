@@ -1,4 +1,4 @@
-package com.lcx.pojo.DAO;
+package com.lcx.pojo.VO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ScoreDAO {
+public class CommonScore {
 
     private int uid;
-    private float writtenScore;
-    private float practicalScore;
-    private float qAndAScore;
+    private String name;
+    private float score;
 
 }

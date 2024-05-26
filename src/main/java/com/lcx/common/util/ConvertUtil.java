@@ -17,7 +17,7 @@ public class ConvertUtil {
             case SheetName.JUDGEMENT -> 3;
             case SheetName.SCHOOL -> 4;
             case SheetName.CONTESTANT -> 5;
-            default -> 0;
+            default -> 0;// 没有这个角色
         };
     }
 

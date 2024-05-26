@@ -2,6 +2,7 @@ package com.lcx.config;
 
 
 import cn.dev33.satoken.interceptor.SaInterceptor;
+import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.json.JacksonObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -17,12 +18,11 @@ import java.util.List;
 @Slf4j
 public class WebMvcConfiguration extends WebMvcConfigurationSupport {
 
-    // 注册 Sa-Token 拦截器，打开注解式鉴权功能
+    // 注册 Sa-Token 路由拦截器
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 注册 Sa-Token 拦截器，打开注解式鉴权功能
-        log.info("注册 Sa-Token 拦截器");
-        registry.addInterceptor(new SaInterceptor())
+        // 注册 Sa-Token 拦截器，校验规则为 StpUtil.checkLogin() 登录校验。
+        registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
                 .addPathPatterns("/**")
                 .excludePathPatterns("/user/login");
     }

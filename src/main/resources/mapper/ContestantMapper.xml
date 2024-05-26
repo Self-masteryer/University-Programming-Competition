@@ -3,15 +3,6 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.lcx.mapper.ContestantMapper">
 
-    <update id="update">
-        update contestant
-        <set>
-            <if test="sid!=null">uid=#{uid}</if>
-            <if test="group!=null">`group`=#{group},</if>
-            <if test="zone!=null">zone=#{zone},</if>
-        </set>
-        where id=#{id}
-    </update>
     <delete id="deleteByUidAndZone">
         delete from contestant
         <where>
@@ -29,12 +20,7 @@
         where c.uid=ds.uid and c.`group`=#{group} and c.zone=#{zone};
     </select>
 
-    <select id="getStudentByUid" resultType="com.lcx.pojo.Entity.Student">
-        select c.uid, c.name, s.name as school from contestant c ,school s
-        where c.school=s.name and c.uid=#{uid};
-    </select>
-
-    <select id="getScoreVoListByGroupAndZone" resultType="com.lcx.pojo.VO.ScoreVo">
+    <select id="getScoreVoListByGroupAndZone" resultType="com.lcx.pojo.VO.ScoreVO">
         select c.name,c.school,c.id_card,c.`group`,c.zone,
                s.seat_num,s.written_score,s.practical_score,s.q_and_a_score,s.final_score
         from contestant c,score_info s where c.uid=s.uid and c.`group`=#{group} and c.zone=#{zone};

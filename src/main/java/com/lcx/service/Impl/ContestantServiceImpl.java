@@ -1,11 +1,15 @@
 package com.lcx.service.Impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.Zone;
 import com.lcx.mapper.ContestantMapper;
-import com.lcx.mapper.PreScoreMapper;
+import com.lcx.mapper.ScoreInfoMapper;
 import com.lcx.mapper.UserInfoMapper;
+import com.lcx.mapper.WrittenScoreMapper;
 import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.VO.ScoreVo;
+import com.lcx.pojo.VO.ScoreVO;
+import com.lcx.pojo.Entity.SingleScore;
+import com.lcx.pojo.VO.SingleScoreVO;
 import com.lcx.service.ContestantService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -19,20 +23,39 @@ public class ContestantServiceImpl implements ContestantService {
     private ContestantMapper contestantMapper;
     @Resource
     private UserInfoMapper userInfoMapper;
+    @Resource
+    private ScoreInfoMapper scoreInfoMapper;
+    @Resource
+    private WrittenScoreMapper writtenScoreMapper;
 
     @Override
     public void addToNational(String group, String zone) {
-        List<ScoreVo> scoreInfoList = contestantMapper
+        List<ScoreVO> scoreInfoList = contestantMapper
                 .getScoreVoListByGroupAndZone(group, zone);
-        scoreInfoList.sort(Comparator.comparingDouble(ScoreVo::getFinalScore).reversed());
+        scoreInfoList.sort(Comparator.comparingDouble(ScoreVO::getFinalScore).reversed());
 
         for (int i = 0; i < 5; i++) {
-            ScoreVo scoreVo = scoreInfoList.get(i);
+            ScoreVO scoreVo = scoreInfoList.get(i);
             Contestant contestant = Contestant.builder().uid(userInfoMapper.getUidByIDCard(scoreVo.getIdCard()))
                     .name(scoreVo.getName()).school(scoreVo.getSchool()).idCard(scoreVo.getIdCard())
                     .group(scoreVo.getGroup()).zone(Zone.N).build();
 
             contestantMapper.insert(contestant);
         }
+    }
+
+    @Override
+    public String getSeatNum() {
+        return scoreInfoMapper.getSeatNum(StpUtil.getLoginIdAsInt());
+    }
+
+    @Override
+    public String getSignNum() {
+        return scoreInfoMapper.getSignNum(StpUtil.getLoginIdAsInt());
+    }
+
+    @Override
+    public SingleScoreVO getWrittenScore() {
+        return writtenScoreMapper.getVOByUid(StpUtil.getLoginIdAsInt());
     }
 }

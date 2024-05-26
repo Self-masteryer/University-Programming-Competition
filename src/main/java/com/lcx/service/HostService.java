@@ -1,6 +1,8 @@
 package com.lcx.service;
 
-import com.lcx.pojo.VO.WrittenScore;
+import com.lcx.pojo.Entity.SingleScore;
+import com.lcx.pojo.VO.CommonScore;
+import com.lcx.pojo.VO.GroupScore;
 import com.lcx.pojo.VO.SeatInfo;
 import com.lcx.pojo.VO.SignGroup;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,9 +20,15 @@ public interface HostService {
 
     List<SeatInfo> seatDraw(String group ,String zone);
 
-    List<WrittenScore> scoreFilter(String group ,String zone);
+    List<SingleScore> scoreFilter(String group , String zone);
 
     List<SignGroup> groupDraw(String group ,String zone);
 
     void exportScoreToPdf(String group ,String zone,HttpServletResponse response);
+
+    void insertScoreInfo(String group, String zone);
+
+    GroupScore getGroupScore(int aUid, int bUid);
+
+    CommonScore getQAndAScore(int uid);
 }

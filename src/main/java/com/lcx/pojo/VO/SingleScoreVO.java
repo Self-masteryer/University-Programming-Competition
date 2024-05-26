@@ -9,12 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class WrittenScore {
+public class SingleScoreVO {
 
     private String name; //姓名
     private String group; // 组别
     private String zone; // 赛区
     private String seatNum; // 座位号
-    private int writtenScore; // 笔试成绩
+    private int score; // 分数
+    private int ranking;// 排名
 
 }

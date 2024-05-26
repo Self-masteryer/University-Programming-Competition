@@ -2,9 +2,8 @@ package com.lcx.mapper;
 
 import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.Entity.ScoreInfo;
 import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.ScoreVo;
+import com.lcx.pojo.VO.ScoreVO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -22,8 +21,6 @@ public interface ContestantMapper {
             "value (#{uid},#{school},#{name},#{idCard},#{group},#{zone})")
     void insert(Contestant contestant);
 
-    void update(Contestant contestant);
-
     int getCountByGroupAndZone(String group, String zone);
 
     @Select("select * from contestant where `group`=#{group} and zone=#{zone}")
@@ -36,12 +33,10 @@ public interface ContestantMapper {
 
     List<SignInfoDAO> getSignInfoListByGroupAndZone(String group, String zone);
 
-    Student getStudentByUid(int uid);
-
     @Select("select uid from contestant where `group`=#{group} and zone=#{zone}")
     List<Integer> getUidListByGroupAndZone(String group, String zone);
 
-    List<ScoreVo> getScoreVoListByGroupAndZone(String group, String zone);
+    List<ScoreVO> getScoreVoListByGroupAndZone(String group, String zone);
 
     void deleteByUidAndZone(Integer uid, String zone);
 }

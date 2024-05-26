@@ -17,8 +17,8 @@ public class PreScorePageQuery {
     private int pageNo;
 
     private String name;
-    private int session;// 届数
     private String group;// 组别
     private String zone;// 赛区
-    private int ranking;// 排名
+    private Integer session;// 届数
+    private Integer ranking;// 排名
 }

@@ -4,8 +4,8 @@
 <mapper namespace="com.lcx.mapper.UserMapper">
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        insert into user (username, password, nickname, rid, enabled)
-        values (#{username},#{password},#{name},#{rid},#{enabled})
+        insert into user (username, password, nickname, rid, enabled,username_modifiable)
+        values (#{username},#{password},#{nickname},#{rid},#{enabled},#{usernameModifiable})
     </insert>
 
     <update id="update">
@@ -13,10 +13,12 @@
         <set>
             <if test="username!=null">username=#{username},</if>
             <if test="password!=null">password=#{password},</if>
-            <if test="name!=null">name=#{name},</if>
+            <if test="nickname!=null">nickname=#{nickname},</if>
             <if test="avatar!=null">avatar=#{avatar},</if>
-            <if test="enabled!=null">enabled=#{enabled}</if>
+            <if test="enabled!=null">enabled=#{enabled},</if>
+            <if test="usernameModifiable!=null">username_modifiable=#{usernameModifiable}</if>
         </set>
+        where id=#{id};
     </update>
 
 </mapper>

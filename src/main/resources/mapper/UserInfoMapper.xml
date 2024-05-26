@@ -6,11 +6,11 @@
     <update id="update">
         update user_info
         <set>
-            <if test="name!=null and name!=''">name=#{name},</if>
+            <if test="name!=null and name!='' ">name=#{name},</if>
             <if test="group!=null">`group`=#{group},</if>
             <if test="zone!=null">zone=#{zone},</if>
         </set>
-        where id_card=#{idCard}
+        where uid=#{uid};
     </update>
 
 </mapper>

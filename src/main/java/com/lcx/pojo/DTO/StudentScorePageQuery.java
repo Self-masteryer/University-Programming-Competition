@@ -18,6 +18,7 @@ public class StudentScorePageQuery {
 
     private String name;
     private String school;
-    private int session;
+    private Integer session;
     private String prize;
+
 }

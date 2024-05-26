@@ -21,6 +21,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Objects;
 
 @Aspect
 @Component
@@ -33,10 +34,11 @@ public class CheckProcessAspect {
     private UserInfoMapper userInfoMapper;
     private String group;
     private String zone;
+    private String key;
+    private String value;
 
     @Pointcut("execution(* com.lcx.controller.*.*(..)) && @annotation(com.lcx.annotation.CheckProcess) ")
-    public void checkProcessPointCut() {
-    }
+    public void checkProcessPointCut() {}
 
     @Before("checkProcessPointCut()")
     public void checkProcessBefore(JoinPoint joinPoint) {
@@ -63,47 +65,26 @@ public class CheckProcessAspect {
 
     @After("checkProcessPointCut()")
     @Transactional
-    public void checkProcessAfter(JoinPoint joinPoint) {
-        //获取方法签名
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        //获得注解参数
-        String process = methodSignature.getMethod().getAnnotation(CheckProcess.class).process();
-        String step = methodSignature.getMethod().getAnnotation(CheckProcess.class).step();
+    public void checkProcessAfter() {
+        // 打分环节，跳过
+        if (value.split(":")[1].equals(Step.RATE)) return;
 
-        if (step.equals(Step.RATE)) return;
-
-        String[] steps = switch (process) {
-            case Process.WRITTEN -> Step.WRITTEN;
-            case Process.PRACTICE -> Step.PRACTICE;
-            case Process.Q_AND_A -> Step.Q_AND_A;
-            default -> Step.FINAL;
-        };
-
-        // 获得下一step
-        for (int i = 0; i < steps.length; i++) {
-            if (steps[i].equals(step)) {
-                step = steps[i + 1];
-                break;
-            }
-        }
+        String[] processStep=Process.PROCESS_STEP;
+        for(int i=0;i<processStep.length;i++)
+            if (processStep[i].equals(value))
+                value=processStep[i+1];
 
         //更新进程信息
-        String key = RedisUtil.getProcessKey(group, zone);
-        String value = RedisUtil.getProcessValue(process, step);
         stringRedisTemplate.opsForValue().set(key, value);
     }
 
-    private boolean checkProcess(String process, String step) {
+    private void checkProcess(String process, String step) {
         //从redis获取当前进程状态
-        String key = RedisUtil.getProcessKey(group, zone);
-        String value = stringRedisTemplate.opsForValue().get(key);
-        // 比赛尚未开始
-        if (value == null) throw new ProcessStatusError(ErrorMessageConstant.COMPETITION_HAS__NOT_BEGUN);
+        key = RedisUtil.getProcessKey(group, zone);
+        value = stringRedisTemplate.opsForValue().get(key);
 
-        String[] values = value.split(":");
-
-        if (step.equals(Step.RATE) && step.equals(values[1])) return true;
-        else if (process.equals(values[0]) && step.equals(values[1])) return true;
-        else throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+        String candidatedValue=RedisUtil.getProcessValue(process,step);
+        if(!Objects.equals(candidatedValue,value))
+            throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
     }
 }

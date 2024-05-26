@@ -2,6 +2,8 @@ package com.lcx.common.constant;
 
 public class Role {
 
+    public static final String ROLE = "role";
+
     public static final int ADMIN = 1;
     public static final int HOST = 2;
     public static final int JUDGEMENT = 3;

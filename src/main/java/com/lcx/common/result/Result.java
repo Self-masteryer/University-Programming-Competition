@@ -24,9 +24,9 @@ public class Result<T> implements Serializable {
         return result;
     }
 
-    public static <T> Result success(String msg, T object) {
+    public static <T> Result success(T object, String msg) {
         Result result = success(object);
-        result.msg=msg;
+        result.msg = msg;
         return result;
     }
 
