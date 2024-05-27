@@ -60,7 +60,7 @@ public class AfterCompetitionAspect {
         scoreService.addStudentScore(group, zone);
         // 存储往届成绩
         scoreService.addPreScore(group, zone);
-        // 设置为游客身份
+        // 将选手、笔试阶段淘汰的选手、主持人、评委设置为游客身份
         adminService.setAsTourist(group, zone);
 
         // 区赛

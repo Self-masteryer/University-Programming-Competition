@@ -1,11 +1,14 @@
 package com.lcx.service.Impl;
 
+import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.lcx.common.constant.Prize;
-import com.lcx.common.constant.Zone;
+import com.lcx.common.constant.*;
+import com.lcx.common.constant.Process;
+import com.lcx.common.exception.process.ProcessStatusError;
 import com.lcx.common.result.PageResult;
+import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DAO.ScoreDAO;
 import com.lcx.pojo.DTO.PreScorePageQuery;
@@ -15,6 +18,7 @@ import com.lcx.pojo.Entity.ScoreInfo;
 import com.lcx.pojo.Entity.StudentScore;
 import com.lcx.pojo.VO.PreScoreVO;
 import com.lcx.pojo.VO.ScoreVO;
+import com.lcx.pojo.VO.SingleScoreVO;
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
@@ -83,7 +87,7 @@ public class ScoreServiceImpl implements ScoreService {
             if (zone.equals(Zone.N)) finalScore = scoreDAO.getPracticalScore() / 2 + scoreDAO.getQAndAScore() / 2;
             else finalScore = (scoreDAO.getWrittenScore() + 2 * scoreDAO.getPracticalScore()
                     + 2 * scoreDAO.getQAndAScore()) / 5;
-            scoreInfoMapper.updateFinalScore(scoreDAO.getUid(),finalScore);
+            scoreInfoMapper.updateFinalScore(scoreDAO.getUid(), finalScore);
         }
     }
 
@@ -130,5 +134,11 @@ public class ScoreServiceImpl implements ScoreService {
             qAndAScoreMapper.deleteByUid(uid);// 快问快打成绩
             contestantMapper.deleteByUidAndZone(uid, zone);// 选手信息
         }
+    }
+
+    @Override
+    @Transactional
+    public SingleScoreVO getWrittenScore(int uid) {
+        return writtenScoreMapper.getVOByUid(uid);
     }
 }

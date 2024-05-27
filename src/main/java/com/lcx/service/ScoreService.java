@@ -4,6 +4,7 @@ import com.lcx.common.result.PageResult;
 import com.lcx.pojo.DTO.PreScorePageQuery;
 import com.lcx.pojo.DTO.StudentScorePageQuery;
 import com.lcx.pojo.VO.PreScoreVO;
+import com.lcx.pojo.VO.SingleScoreVO;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -20,12 +21,11 @@ public interface ScoreService {
 
     PageResult pageQueryStudentScore(StudentScorePageQuery studentScorePageQuery);
 
-    @Transactional
     void deleteWrittenScore(String group, String zone);
 
-    @Transactional
     void addStudentScore(String group, String zone);
 
-    @Transactional
     void deleteScore(String group, String zone);
+
+    SingleScoreVO getWrittenScore(int uid);
 }

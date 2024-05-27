@@ -187,10 +187,6 @@ public class HostServiceImpl implements HostService {
         for (int i = 30; i < scores.size(); i++) {
             int uid = scores.get(i).getUid();
 
-            userMapper.updateRole(uid, Role.TOURIST);// 设置成游客身份
-            UserInfo userInfo = UserInfo.builder().uid(uid).group("").zone("").build();
-            userInfoMapper.update(userInfo);// 更新用户信息
-
             contestantMapper.deleteByUid(uid);// 删除选手
             scoreInfoMapper.deleteByUid(uid);// 删除成绩
         }

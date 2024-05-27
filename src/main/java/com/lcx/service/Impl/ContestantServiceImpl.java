@@ -25,8 +25,6 @@ public class ContestantServiceImpl implements ContestantService {
     private UserInfoMapper userInfoMapper;
     @Resource
     private ScoreInfoMapper scoreInfoMapper;
-    @Resource
-    private WrittenScoreMapper writtenScoreMapper;
 
     @Override
     public void addToNational(String group, String zone) {
@@ -54,8 +52,4 @@ public class ContestantServiceImpl implements ContestantService {
         return scoreInfoMapper.getSignNum(StpUtil.getLoginIdAsInt());
     }
 
-    @Override
-    public SingleScoreVO getWrittenScore() {
-        return writtenScoreMapper.getVOByUid(StpUtil.getLoginIdAsInt());
-    }
 }

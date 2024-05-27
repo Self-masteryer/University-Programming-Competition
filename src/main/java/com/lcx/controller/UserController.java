@@ -8,8 +8,6 @@ import com.lcx.pojo.Entity.AccountInfo;
 import com.lcx.pojo.DTO.ResetAccountDTO;
 import com.lcx.pojo.DTO.UserLoginDTO;
 import com.lcx.pojo.VO.PreScoreVO;
-import com.lcx.pojo.VO.SingleScoreVO;
-import com.lcx.service.ContestantService;
 import com.lcx.service.ScoreService;
 import com.lcx.service.UserService;
 import jakarta.annotation.Resource;
@@ -34,8 +32,6 @@ public class UserController {
     private ScoreService scoreService;
     @Resource
     private AliOssUtil aliOssUtil;
-    @Resource
-    private ContestantService contestantService;
 
     @PostMapping("/login")
     public Result login(@RequestBody @Validated UserLoginDTO userLoginDTO) {
@@ -47,12 +43,6 @@ public class UserController {
     @GetMapping("/myPreScore")
     public Result<List<PreScoreVO>> queryMyPreScore() {
         return Result.success(scoreService.queryMyPreScore());
-    }
-
-    // 查询笔试成绩
-    @GetMapping("/writtenScore")
-    public Result<SingleScoreVO> getWrittenScore() {
-        return Result.success(contestantService.getWrittenScore());
     }
 
     // 重置用户名、密码

@@ -1,10 +1,10 @@
 package com.lcx.aspect;
 
+import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.annotation.CheckProcess;
-import com.lcx.common.constant.ErrorMessageConstant;
+import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.constant.Step;
 import com.lcx.common.exception.process.ProcessStatusError;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.UserInfoMapper;
@@ -49,10 +49,10 @@ public class CheckProcessAspect {
         String step = methodSignature.getMethod().getAnnotation(CheckProcess.class).step();
 
         // 判断是管理员还是主持人
-        UserInfo userInfo = userInfoMapper.getByUid(StpUtil.getLoginIdAsInt());
-        if (userInfo != null) {
-            group = userInfo.getGroup();
-            zone = userInfo.getZone();
+        SaSession session = StpUtil.getSession();
+        if (session.get(Role.ROLE).equals("2")) {
+            group = session.getString(Group.GROUP);
+            zone = session.getString(Zone.ZONE);
         } else {
             Object[] args = joinPoint.getArgs();
             CompInfoDTO compInfoDTO = (CompInfoDTO) args[0];
