@@ -14,4 +14,8 @@ public class Process {
     public static final String DISTRICT = "district";
     public static final String NATIONAL = "national";
 
+    public static final String W = "笔试环节";
+    public static final String P = "实战能力比试";
+    public static final String Q = "快问快答环节";
+    public static final String F = "成绩现场导出";
 }

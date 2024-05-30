@@ -18,4 +18,11 @@ public class Step {
     public static final String NEXT = "next";
     public static final String RATE = "rate";
 
+    public static final String SD="座位号抽签";
+    public static final String PWS="上传笔试成绩";
+    public static final String SF="成绩筛选";
+    public static final String GD="组号抽签";
+    public static final String R="评委打分";
+    public static final String SE="成绩导出";
+    public static final String N="主持人推进";
 }

@@ -4,6 +4,9 @@ public class ErrorMessageConstant {
     public static final String UNKNOWN_ERROR = "未知错误";
     public static final String ALREADY_EXISTS = "已存在";
     public static final String UPLOAD_FAILED = "上传失败";
+    public static final String ROLE_VERIFICATION_EXCEPTION= "角色校验异常";
+    public static final String NOT_LOGIN = "用户未登录";
+
 
     public static final String PASSWORD_ERROR = "密码错误";
     public static final String ACCOUNT_NOT_FIND = "账号不存在";

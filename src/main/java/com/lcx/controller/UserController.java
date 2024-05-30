@@ -1,5 +1,6 @@
 package com.lcx.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.ErrorMessageConstant;
 import com.lcx.common.result.Result;
 import com.lcx.common.util.AliOssUtil;
@@ -33,10 +34,18 @@ public class UserController {
     @Resource
     private AliOssUtil aliOssUtil;
 
+    // 登录
     @PostMapping("/login")
     public Result login(@RequestBody @Validated UserLoginDTO userLoginDTO) {
         userService.login(userLoginDTO);
         return Result.success("登录成功");
+    }
+
+    // 退出
+    @GetMapping("/logout")
+    public Result logout() {
+        userService.logout(StpUtil.getLoginIdAsInt());
+        return Result.success("退出成功");
     }
 
     // 查询个人往届成绩

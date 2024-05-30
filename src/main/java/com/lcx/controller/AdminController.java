@@ -3,9 +3,8 @@ package com.lcx.controller;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.lcx.common.result.PageResult;
 import com.lcx.common.result.Result;
-import com.lcx.pojo.DTO.PreScorePageQuery;
-import com.lcx.pojo.DTO.SignUpTime;
-import com.lcx.pojo.DTO.StudentScorePageQuery;
+import com.lcx.pojo.DTO.*;
+import com.lcx.pojo.VO.ProcessVO;
 import com.lcx.service.AdminService;
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
@@ -13,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin")
@@ -66,4 +67,15 @@ public class AdminController {
         return Result.success(scoreService.pageQueryStudentScore(studentScorePageQuery));
     }
 
+    // 查询赛区进程
+    @GetMapping("/process")
+    public Result<List<ProcessVO>> queryProcess(String group,String zone) {
+        return Result.success(adminService.queryProcess(group,zone));
+    }
+
+    // 查询账号状态
+    @GetMapping("/status")
+    public Result<PageResult> queryStatus(StatusPageQuery statusPageQuery) {
+        return Result.success(adminService.queryStatus(statusPageQuery));
+    }
 }

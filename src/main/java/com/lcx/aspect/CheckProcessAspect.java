@@ -42,15 +42,15 @@ public class CheckProcessAspect {
 
     @Before("checkProcessPointCut()")
     public void checkProcessBefore(JoinPoint joinPoint) {
-        //获取方法签名
+        // 获取方法签名
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        //获得注解参数
+        // 获得注解参数
         String process = methodSignature.getMethod().getAnnotation(CheckProcess.class).process();
         String step = methodSignature.getMethod().getAnnotation(CheckProcess.class).step();
 
         // 判断是管理员还是主持人
         SaSession session = StpUtil.getSession();
-        if (session.get(Role.ROLE).equals("2")) {
+        if (session.get(Role.ROLE).equals(Role.HOST)) {
             group = session.getString(Group.GROUP);
             zone = session.getString(Zone.ZONE);
         } else {

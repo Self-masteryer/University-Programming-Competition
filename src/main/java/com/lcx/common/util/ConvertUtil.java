@@ -3,6 +3,8 @@ package com.lcx.common.util;
 import com.lcx.common.constant.Group;
 import com.lcx.common.constant.SheetName;
 import com.lcx.common.constant.Zone;
+import com.lcx.common.constant.Process;
+import com.lcx.common.constant.Step;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -58,6 +60,29 @@ public class ConvertUtil {
         return switch (group) {
             case "BK" -> Group.BK;
             case "GZ" -> Group.GZ;
+            default -> "";
+        };
+    }
+
+    public static String parseProcessStr(String process) {
+        return switch (process) {
+            case Process.WRITTEN -> Process.W;
+            case Process.PRACTICE -> Process.P;
+            case Process.Q_AND_A -> Process.Q;
+            case Process.FINAL -> Process.F;
+            default -> "尚未开启";
+        };
+    }
+
+    public static String parseStepStr(String step) {
+        return switch (step) {
+            case Step.SEAT_DRAW -> Step.SD;
+            case Step.POST_WRITTEN_SCORE -> Process.P;
+            case Step.SCORE_FILTER -> Step.SF;
+            case Step.GROUP_DRAW -> Step.GD;
+            case Step.RATE -> Step.R;
+            case Step.SCORE_EXPORT -> Step.SE;
+            case Step.NEXT -> Step.N;
             default -> "";
         };
     }

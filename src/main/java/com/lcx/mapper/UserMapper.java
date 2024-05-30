@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
+
 @Mapper
 public interface UserMapper {
     @Select("select * from user where username=#{username}")
@@ -29,4 +31,7 @@ public interface UserMapper {
 
     @Select("select nickname,avatar from user where id=#{id}")
     AccountInfo getInfo(int id);
+
+    @Update("update user set status=#{status} , online_time=#{onlineTime} where id=#{id}")
+    void updateStatus(int id,int status, LocalDateTime onlineTime);
 }

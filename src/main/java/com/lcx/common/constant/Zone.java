@@ -4,6 +4,7 @@ public class Zone {
 
     public static final String ZONE = "zone";
 
+    public static final String[] ZONES = {"NW","SW","NE","SE","C","E","N"};
     public static final String[] DISTRICT_ZONES = {"NW","SW","NE","SE","C","E"};
 
     public static final String NORTH_WEST = "西北赛区";

@@ -40,11 +40,7 @@ public class HostServiceImpl implements HostService {
     @Resource
     private ScoreInfoMapper scoreInfoMapper;
     @Resource
-    private UserMapper userMapper;
-    @Resource
     private WrittenScoreMapper writtenScoreMapper;
-    @Resource
-    private UserInfoMapper userInfoMapper;
 
     // 开启区赛
     @Override
@@ -159,7 +155,8 @@ public class HostServiceImpl implements HostService {
             seatTable.add(seatInfo);
         }
         //按座位号升序排序
-        seatTable.sort(Comparator.comparingInt(o -> Integer.parseInt(o.getSeatNum().substring(6))));
+        seatTable.sort(Comparator.comparingInt(o -> Integer.parseInt(
+                o.getSeatNum().substring(o.getSeatNum().lastIndexOf(":")+1))));
 
         return seatTable;
     }

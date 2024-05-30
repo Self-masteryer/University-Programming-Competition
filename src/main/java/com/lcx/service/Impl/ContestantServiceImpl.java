@@ -26,6 +26,7 @@ public class ContestantServiceImpl implements ContestantService {
     @Resource
     private ScoreInfoMapper scoreInfoMapper;
 
+    // 添加国赛选手
     @Override
     public void addToNational(String group, String zone) {
         List<ScoreVO> scoreInfoList = contestantMapper
@@ -42,11 +43,13 @@ public class ContestantServiceImpl implements ContestantService {
         }
     }
 
+    // 获得座位号
     @Override
     public String getSeatNum() {
         return scoreInfoMapper.getSeatNum(StpUtil.getLoginIdAsInt());
     }
 
+    // 获得组号
     @Override
     public String getSignNum() {
         return scoreInfoMapper.getSignNum(StpUtil.getLoginIdAsInt());

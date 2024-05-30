@@ -42,7 +42,7 @@ public class HostController {
     @PostMapping("/startDistrictCompetition")
     public Result startCompetition(@RequestBody CompInfoDTO compInfoDTO) {
         SaSession session = StpUtil.getSession();
-        if (session.getInt(Role.ROLE) == 2)// 主持人
+        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             hostService.startCompetition(session.getString(Group.GROUP), session.getString(Zone.ZONE));
         else// 管理员
             hostService.startCompetition(compInfoDTO.getGroup(), compInfoDTO.getZone());
@@ -53,7 +53,7 @@ public class HostController {
     @PostMapping("/nextProcess")
     public Result nextProcess(@RequestBody CompInfoDTO compInfoDTO) {
         SaSession session = StpUtil.getSession();
-        if (session.getInt(Role.ROLE) == 2)// 主持人
+        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             hostService.nextProcess(session.getString(Group.GROUP), session.getString(Zone.ZONE));
         else// 管理员
             hostService.nextProcess(compInfoDTO.getGroup(), compInfoDTO.getZone());
@@ -67,7 +67,7 @@ public class HostController {
         SaSession session = StpUtil.getSession();
         List<SeatInfo> seatTable;
 
-        if (session.getInt(Role.ROLE) == 2)// 主持人
+        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             seatTable = hostService.seatDraw(session.getString(Group.GROUP), session.getString(Zone.ZONE));
         else// 管理员
             seatTable = hostService.seatDraw(compInfoDTO.getGroup(), compInfoDTO.getZone());
@@ -90,7 +90,7 @@ public class HostController {
         SaSession session = StpUtil.getSession();
         List<SingleScore> scoreList;
 
-        if (session.getInt(Role.ROLE) == 2)// 主持人
+        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             scoreList = hostService.scoreFilter(session.getString(Group.GROUP), session.getString(Zone.ZONE));
         else// 管理员
             scoreList = hostService.scoreFilter(compInfoDTO.getGroup(), compInfoDTO.getZone());
@@ -105,7 +105,7 @@ public class HostController {
         SaSession session = StpUtil.getSession();
         List<SignGroup> signGroupList;
 
-        if (session.getInt(Role.ROLE) == 2)// 主持人
+        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             signGroupList = hostService.groupDraw(session.getString(Group.GROUP), session.getString(Zone.ZONE));
         else// 管理员
             signGroupList = hostService.groupDraw(compInfoDTO.getGroup(), compInfoDTO.getZone());
@@ -134,7 +134,7 @@ public class HostController {
     public void exportScoreToPdf(HttpServletResponse response, @RequestBody CompInfoDTO compInfoDTO) {
         SaSession session = StpUtil.getSession();
 
-        if (session.getInt(Role.ROLE) == 2)// 主持人
+        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             hostService.exportScoreToPdf(session.getString(Group.GROUP), session.getString(Zone.ZONE),response);
         else// 管理员
             hostService.exportScoreToPdf(compInfoDTO.getGroup(), compInfoDTO.getZone(),response);

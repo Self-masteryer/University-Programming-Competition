@@ -4,12 +4,15 @@ import cn.dev33.satoken.secure.BCrypt;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.process.ProcessStatusError;
+import com.lcx.common.result.PageResult;
 import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RandomStringUtils;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DTO.SignUpTime;
+import com.lcx.pojo.DTO.StatusPageQuery;
 import com.lcx.pojo.Entity.*;
+import com.lcx.pojo.VO.ProcessVO;
 import com.lcx.service.AdminService;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
@@ -25,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -110,7 +114,7 @@ public class AdminServiceImpl implements AdminService {
                         // 设置角色
                         user.setRid(rid);
                         // 重置密码
-                        if(inRow.getCell(4).getBooleanCellValue()){
+                        if (inRow.getCell(4).getBooleanCellValue()) {
                             String password = RandomStringUtils.length(8);
                             user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
                             outRow.createCell(2).setCellValue(password);
@@ -224,7 +228,7 @@ public class AdminServiceImpl implements AdminService {
         // 判断区赛是否全部结束
 //        String[] group=Group.GROUP;
 //        String[] zone=Zone.DISTRICT_ZONE;
-//        String process= RedisUtil.getProcessValue(Process.FINAL,Step.NEXT);
+//        String process= RedisUtil.getProcessValue(ProcessVO.FINAL,Step.NEXT);
 //        for(int i=0;i<group.length;i++){
 //            for(int j=0;j<zone.length;j++){
 //                String key=RedisUtil.getProcessKey(group[i],zone[j]);
@@ -235,13 +239,13 @@ public class AdminServiceImpl implements AdminService {
 //        }
 
         // 判断区赛是否全部结束
-        int count=contestantMapper.getCountByGroupAndZone(null,Zone.N);
+        int count = contestantMapper.getCountByGroupAndZone(null, Zone.N);
         if (count != 60)
             throw new ProcessStatusError(ErrorMessageConstant.DISTRICT_IS_ONGOING);
 
         // 清除redis中的进程信息
-        String[] group=Group.GROUPS;
-        String[] zone=Zone.DISTRICT_ZONES;
+        String[] group = Group.GROUPS;
+        String[] zone = Zone.DISTRICT_ZONES;
         for (String string : group) {
             for (String s : zone) {
                 String key = RedisUtil.getProcessKey(string, s);
@@ -254,15 +258,15 @@ public class AdminServiceImpl implements AdminService {
 
         // 将比赛设置为国赛
         stringRedisTemplate.opsForValue().set("competition", Process.NATIONAL);
-        String key=RedisUtil.getProcessKey("BK",Zone.N);
-        String value = RedisUtil.getProcessValue(Process.PRACTICE,Step.GROUP_DRAW);
-        stringRedisTemplate.opsForValue().set(key,value);
-        key = RedisUtil.getProcessKey("GZ",Zone.N);
-        stringRedisTemplate.opsForValue().set(key,value);
+        String key = RedisUtil.getProcessKey("BK", Zone.N);
+        String value = RedisUtil.getProcessValue(Process.PRACTICE, Step.GROUP_DRAW);
+        stringRedisTemplate.opsForValue().set(key, value);
+        key = RedisUtil.getProcessKey("GZ", Zone.N);
+        stringRedisTemplate.opsForValue().set(key, value);
 
         // 插入选手成绩信息
-        hostService.insertScoreInfo("BK",Zone.N);
-        hostService.insertScoreInfo("GZ",Zone.N);
+        hostService.insertScoreInfo("BK", Zone.N);
+        hostService.insertScoreInfo("GZ", Zone.N);
     }
 
     @Override
@@ -274,5 +278,66 @@ public class AdminServiceImpl implements AdminService {
             UserInfo userInfo = UserInfo.builder().uid(uid).group("").zone("").build();
             userInfoMapper.update(userInfo);
         }
+    }
+
+    @Override
+    public List<ProcessVO> queryProcess(String group, String zone) {
+        List<ProcessVO> processVOList = new ArrayList<>();
+
+        // 查询全部区赛
+        if (group == null && zone == null) {
+            String[] groups = Group.GROUPS;
+            String[] zones = Zone.ZONES;
+            for (String g : groups) {
+                for (String z : zones) {
+                    ProcessVO processVO = getProcessVO(g, z);
+                    processVOList.add(processVO);
+                }
+            }
+        }// 按组别赛区查询
+        else if (group != null && zone != null) {
+            ProcessVO processVO = getProcessVO(group, zone);
+            processVOList.add(processVO);
+        }// 按组别查询
+        else if (zone == null) {
+            String[] zones = Zone.ZONES;
+            for (String z : zones) {
+                ProcessVO processVO = getProcessVO(group, z);
+                processVOList.add(processVO);
+            }
+        }// 按赛区查询
+        else {
+            String[] groups = Group.GROUPS;
+            for (String g : groups) {
+                ProcessVO processVO = getProcessVO(g, zone);
+                processVOList.add(processVO);
+            }
+        }
+        return processVOList;
+    }
+
+    // 查询用户状态
+    @Override
+    public PageResult queryStatus(StatusPageQuery statusPageQuery) {
+        return null;
+    }
+
+    private ProcessVO getProcessVO(String group, String zone) {
+        String key = RedisUtil.getProcessKey(group, zone);
+        String value = stringRedisTemplate.opsForValue().get(key);
+
+        ProcessVO processVO;
+        if (value == null) {
+            processVO = ProcessVO.builder().group(ConvertUtil.parseGroupStr(group))
+                    .zone(ConvertUtil.parseZoneStr(zone))
+                    .process("尚未开启比赛").build();
+        } else {
+            String[] values = value.split(":");
+            processVO = ProcessVO.builder().group(ConvertUtil.parseGroupStr(group))
+                    .zone(ConvertUtil.parseZoneStr(zone))
+                    .process(ConvertUtil.parseProcessStr(values[0]))
+                    .step(ConvertUtil.parseStepStr(values[1])).build();
+        }
+        return processVO;
     }
 }

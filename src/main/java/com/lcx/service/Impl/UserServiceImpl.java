@@ -1,6 +1,7 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.secure.BCrypt;
+import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.*;
 import com.lcx.common.exception.account.AccountException;
@@ -10,6 +11,7 @@ import com.lcx.common.exception.account.UsernameExistsException;
 import com.lcx.common.exception.account.UsernameModifiableException;
 import com.lcx.common.exception.time.SignUpTimeErrorException;
 import com.lcx.common.util.RandomStringUtils;
+import com.lcx.controller.AdminController;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.SchoolMapper;
 import com.lcx.mapper.UserInfoMapper;
@@ -20,10 +22,12 @@ import com.lcx.pojo.VO.SignUpVO;
 import com.lcx.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -51,16 +55,26 @@ public class UserServiceImpl implements UserService {
         //校验密码
         if (!BCrypt.checkpw(userLoginDTO.getPassword(), user.getPassword()))
             throw new PasswordException(ErrorMessageConstant.PASSWORD_ERROR);
-
+        // 登录
         StpUtil.login(user.getId());
-
         // 认证登录完成，添加session(管理员与游客不用)
-        if(user.getRid()!=1&&user.getRid()!=6){
+        if (user.getRid() != Role.ADMIN && user.getRid() != Role.TOURIST) {
             UserInfo userInfo = userInfoMapper.getByUid(user.getId());
             StpUtil.getSession().set(Group.GROUP, userInfo.getGroup());
             StpUtil.getSession().set(Zone.ZONE, userInfo.getZone());
         }
-        StpUtil.getSession().set(Role.ROLE,user.getRid());
+        // 添加角色id
+        StpUtil.getSession().set(Role.ROLE, user.getRid());
+
+        // 更新用户状态
+        userMapper.updateStatus(user.getId(), 1, LocalDateTime.now());
+    }
+
+    @Override
+    public void logout(int uid){
+        StpUtil.logout(uid);
+        // 更新用户状态
+        userMapper.updateStatus(uid, 0, LocalDateTime.now());
     }
 
     @Override
@@ -106,7 +120,7 @@ public class UserServiceImpl implements UserService {
         else {
             user = userMapper.getById(userInfo.getUid());
             // 重置密码
-            if(signUpDTO.getResetPwd()==1){
+            if (signUpDTO.getResetPwd() == 1) {
                 String password = RandomStringUtils.length(8);
                 user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
                 signUpVO.setPassword(password);
@@ -142,7 +156,7 @@ public class UserServiceImpl implements UserService {
 
         // 检查能否修改用户名
         User user = userMapper.getById(StpUtil.getLoginIdAsInt());
-        if(user.getUsernameModifiable()==0)
+        if (user.getUsernameModifiable() == 0)
             throw new UsernameModifiableException(ErrorMessageConstant.USERNAME_HAS_BEEN_MODIFIED_ONCE);
 
         user = userMapper.getByUsername(username);
@@ -155,7 +169,7 @@ public class UserServiceImpl implements UserService {
             throw new PasswordException(ErrorMessageConstant.PASSWORD_INCONSISTENCY);
 
         user = User.builder().id(StpUtil.getLoginIdAsInt()).username(username)
-                .password(BCrypt.hashpw(password,BCrypt.gensalt())).usernameModifiable(0).build();
+                .password(BCrypt.hashpw(password, BCrypt.gensalt())).usernameModifiable(0).build();
         userMapper.update(user);
 
         // 强制退出，重新登录
@@ -167,7 +181,7 @@ public class UserServiceImpl implements UserService {
         // 检验旧密码是否正确
         User user = userMapper.getById(StpUtil.getLoginIdAsInt());
         String candidatedPassword = changePwdDTO.getOldPassword();
-        if(!BCrypt.checkpw(candidatedPassword,user.getPassword()))
+        if (!BCrypt.checkpw(candidatedPassword, user.getPassword()))
             throw new PasswordException(ErrorMessageConstant.PASSWORD_ERROR);
 
         // 检验新密码是否一致
@@ -176,8 +190,8 @@ public class UserServiceImpl implements UserService {
         if (!confirmPassword.equals(newPassword))
             throw new PasswordException(ErrorMessageConstant.PASSWORD_INCONSISTENCY);
 
-        String hashedPassword = BCrypt.hashpw(newPassword,BCrypt.gensalt());
-        userMapper.updatePwdById(StpUtil.getLoginIdAsInt(),hashedPassword);
+        String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        userMapper.updatePwdById(StpUtil.getLoginIdAsInt(), hashedPassword);
 
         // 强制退出，重新登录
         StpUtil.logout(StpUtil.getLoginId());

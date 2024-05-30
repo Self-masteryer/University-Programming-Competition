@@ -18,4 +18,5 @@ public interface UserService {
 
     AccountInfo getInfo();
 
+    void logout(int uid);
 }

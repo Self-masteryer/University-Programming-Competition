@@ -1,5 +1,7 @@
 package com.lcx.annotation;
 
+import com.lcx.common.constant.Item;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -11,6 +13,6 @@ public @interface CheckQueryProcess {
 
     String process();
 
-    String item();
+    String item() default Item.SCORE;
 
 }
