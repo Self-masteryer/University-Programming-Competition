@@ -1,10 +1,7 @@
 package com.lcx.common.util;
 
-import com.lcx.common.constant.Group;
-import com.lcx.common.constant.SheetName;
-import com.lcx.common.constant.Zone;
+import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.constant.Step;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,11 +12,37 @@ public class ConvertUtil {
 
     public static int parseRoleNum(String role) {
         return switch (role) {
-            case SheetName.HOST -> 2;
-            case SheetName.JUDGEMENT -> 3;
-            case SheetName.SCHOOL -> 4;
-            case SheetName.CONTESTANT -> 5;
+            case Role.A -> 1;
+            case Role.H -> 2;
+            case Role.J -> 3;
+            case Role.S -> 4;
+            case Role.C -> 5;
+            case Role.T -> 6;
             default -> 0;// 没有这个角色
+        };
+    }
+
+    public static String parseRoleStr(int rid) {
+        return switch (rid) {
+            case 1 -> Role.A;
+            case 2 -> Role.H;
+            case 3 -> Role.J;
+            case 4 -> Role.S;
+            case 5 -> Role.C;
+            case 6 -> Role.T;
+            default -> null;
+        };
+    }
+
+    public static String parseRoleStr(String rid) {
+        return switch (rid) {
+            case "1" -> Role.A;
+            case "2" -> Role.H;
+            case "3" -> Role.J;
+            case "4" -> Role.S;
+            case "5" -> Role.C;
+            case "6" -> Role.T;
+            default -> null;
         };
     }
 
@@ -32,7 +55,7 @@ public class ConvertUtil {
             case Zone.CENTRAL -> "C";
             case Zone.EAST -> "E";
             case Zone.NATIONAL -> "N";
-            default -> "";
+            default -> null;
         };
     }
 
@@ -44,7 +67,8 @@ public class ConvertUtil {
             case Zone.SE -> Zone.SOUTH_EAST;
             case Zone.E -> Zone.EAST;
             case Zone.C -> Zone.CENTRAL;
-            default -> Zone.NATIONAL;
+            case Zone.N -> Zone.NATIONAL;
+            default -> null;
         };
     }
 
@@ -52,7 +76,7 @@ public class ConvertUtil {
         return switch (group) {
             case Group.BK -> "BK";
             case Group.GZ -> "GZ";
-            default -> "";
+            default -> null;
         };
     }
 
@@ -60,7 +84,7 @@ public class ConvertUtil {
         return switch (group) {
             case "BK" -> Group.BK;
             case "GZ" -> Group.GZ;
-            default -> "";
+            default -> null;
         };
     }
 
@@ -83,7 +107,7 @@ public class ConvertUtil {
             case Step.RATE -> Step.R;
             case Step.SCORE_EXPORT -> Step.SE;
             case Step.NEXT -> Step.N;
-            default -> "";
+            default -> null;
         };
     }
 
@@ -102,5 +126,13 @@ public class ConvertUtil {
         // 转换为ZonedDateTime
         ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.systemDefault());
         return String.valueOf(zonedDateTime.toInstant().toEpochMilli());
+    }
+
+    public static String parseStatusStr(String status) {
+        return switch (status){
+            case "0" -> "离线";
+            case "1" -> "在线";
+            default -> null;
+        };
     }
 }

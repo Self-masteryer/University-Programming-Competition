@@ -1,6 +1,8 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.secure.BCrypt;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.process.ProcessStatusError;
@@ -13,6 +15,7 @@ import com.lcx.pojo.DTO.SignUpTime;
 import com.lcx.pojo.DTO.StatusPageQuery;
 import com.lcx.pojo.Entity.*;
 import com.lcx.pojo.VO.ProcessVO;
+import com.lcx.pojo.VO.StatusVO;
 import com.lcx.service.AdminService;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
@@ -319,7 +322,16 @@ public class AdminServiceImpl implements AdminService {
     // 查询用户状态
     @Override
     public PageResult queryStatus(StatusPageQuery statusPageQuery) {
-        return null;
+        PageHelper.startPage(statusPageQuery.getPageNo(), statusPageQuery.getPageSize());
+        Page<StatusVO> page=userMapper.queryStatusVO(statusPageQuery);
+        List<StatusVO> statusVOList = page.getResult();
+        for (StatusVO statusVO : statusVOList) {
+            statusVO.setRole(ConvertUtil.parseRoleStr(statusVO.getRole()));
+            statusVO.setGroup(ConvertUtil.parseGroupStr(statusVO.getGroup()));
+            statusVO.setZone(ConvertUtil.parseZoneStr(statusVO.getZone()));
+            statusVO.setStatus(ConvertUtil.parseStatusStr(statusVO.getStatus()));
+        }
+        return new PageResult(page.getTotal(), statusVOList);
     }
 
     private ProcessVO getProcessVO(String group, String zone) {

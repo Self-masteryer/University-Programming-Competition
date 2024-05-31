@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Status {
+public class StatusInfo {
 
+    private int id;// uid
     private String status;// 在线 || 离线
-
-    private LocalDateTime time;// 登录时间 || 离线时间
+    private LocalDateTime onlineTime;// 登录时间 || 离线时间
 
 }

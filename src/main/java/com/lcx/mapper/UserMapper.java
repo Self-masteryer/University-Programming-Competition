@@ -1,12 +1,16 @@
 package com.lcx.mapper;
 
+import com.github.pagehelper.Page;
+import com.lcx.pojo.DTO.StatusPageQuery;
 import com.lcx.pojo.Entity.AccountInfo;
 import com.lcx.pojo.Entity.User;
+import com.lcx.pojo.VO.StatusVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface UserMapper {
@@ -34,4 +38,6 @@ public interface UserMapper {
 
     @Update("update user set status=#{status} , online_time=#{onlineTime} where id=#{id}")
     void updateStatus(int id,int status, LocalDateTime onlineTime);
+
+    Page<StatusVO> queryStatusVO(StatusPageQuery statusPageQuery);
 }

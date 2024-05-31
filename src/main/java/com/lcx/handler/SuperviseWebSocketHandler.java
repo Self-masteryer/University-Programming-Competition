@@ -1,43 +1,56 @@
 package com.lcx.handler;
 
+import com.lcx.common.util.RedisUtil;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
+//  实时向管理员推送用户状态改变信息
 @Slf4j
+@Component
 public class SuperviseWebSocketHandler extends TextWebSocketHandler {
 
-    private WebSocketSession webSocketSession;
-    //private final ConcurrentMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    // 只有一个管理员
+    private WebSocketSession session;
+    private Map<String, Object> attributes;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        //Map<String, Object> attributes = session.getAttributes();
-        //int uid = (int) attributes.get("uid");
-        log.info("WebSocket 连接建立: {}", session.getId());
-    }
-
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        log.info("收到消息: {}", message.getPayload());
+        this.session=session;
+        attributes=session.getAttributes();
+        // 开启向消息队列发送状态消息
+        stringRedisTemplate.opsForValue().set(RedisUtil.SUPERVISE_KEY,RedisUtil.SUPERVISE_OPEN);
+        log.info("SuperviseWebSocket 连接建立: {}", attributes.get("uid"));
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        log.info("WebSocket 连接关闭: {}", session.getId());
+        // 关闭向消息队列发送状态消息
+        stringRedisTemplate.opsForValue().set(RedisUtil.SUPERVISE_KEY,RedisUtil.SUPERVISE_CLOSE);
+        log.info("SuperviseWebSocket 连接关闭: {}", attributes.get("uid"));
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        log.error("WebSocket 传输错误: {}", session.getId(), exception);
+        log.error("SuperviseWebSocket 传输错误: {}", session.getId(), exception);
     }
 
+    public void sendStatusInfo(String statusInfo)  {
+        try {
+            session.sendMessage(new TextMessage(statusInfo));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

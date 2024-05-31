@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 public class StatusPageQuery {
 
     @NotNull
-    private int pageSize;
+    private Integer pageSize;
     @NotNull
-    private int pageNo;
+    private Integer pageNo;
 
     private String name;// 真实姓名
-    private int rid;// 角色
+    private Integer rid;// 角色
     private String group;// 组别
     private String zone;// 赛区
 

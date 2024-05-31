@@ -36,4 +36,5 @@ public class StpInterfaceImpl implements StpInterface {
         return roleMapper.list(loginId);
     }
 
+
 }

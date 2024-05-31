@@ -3,6 +3,9 @@ package com.lcx.common.util;
 
 public class RedisUtil {
 
+    public static final String SUPERVISE_KEY = "supervise";
+    public static final String SUPERVISE_OPEN = "1";
+    public static final String SUPERVISE_CLOSE = "0";
     public static final String RATE_TIMES = "rate_times";
     public static final String RATE_NUMS = "rate_nums";
 

@@ -8,6 +8,7 @@ import com.lcx.common.exception.RoleVerificationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
@@ -21,17 +22,17 @@ public class SuperviseWebSocketHandshakeInterceptor extends HttpSessionHandshake
             , WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         // 从请求头中读取token
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if(token == null)
+        if (token == null)
             throw new LoginException(ErrorMessageConstant.NOT_LOGIN);
 
-        // 解析uid
+        // 解析token，获得id
         int uid = Integer.parseInt((String) StpUtil.getLoginIdByToken(token));
         // 验证管理员身份
         SaSession saSession = StpUtil.getSessionByLoginId(uid);
-        if(saSession.getInt(Role.ROLE)!=Role.ADMIN)
+        if (saSession.getInt(Role.ROLE) != Role.ADMIN)
             throw new RoleVerificationException(ErrorMessageConstant.ROLE_VERIFICATION_EXCEPTION);
 
-        // 添加进属性
+        // 添加uid属性
         attributes.put("uid", uid);
 
         return super.beforeHandshake(request, response, wsHandler, attributes);

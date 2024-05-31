@@ -22,6 +22,7 @@ import com.lcx.pojo.VO.SignUpVO;
 import com.lcx.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,8 @@ public class UserServiceImpl implements UserService {
     private ContestantMapper contestantMapper;
     @Resource
     private UserInfoMapper userInfoMapper;
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     public void login(UserLoginDTO userLoginDTO) {
@@ -55,26 +58,22 @@ public class UserServiceImpl implements UserService {
         //校验密码
         if (!BCrypt.checkpw(userLoginDTO.getPassword(), user.getPassword()))
             throw new PasswordException(ErrorMessageConstant.PASSWORD_ERROR);
+
         // 登录
         StpUtil.login(user.getId());
-        // 认证登录完成，添加session(管理员与游客不用)
-        if (user.getRid() != Role.ADMIN && user.getRid() != Role.TOURIST) {
+
+        // 认证登录完成，添加session:主持人、评委、选手、学校
+        if (user.getRid() == Role.HOST || user.getRid() == Role.JUDGEMENT || user.getRid() == Role.CONTESTANT) {
             UserInfo userInfo = userInfoMapper.getByUid(user.getId());
             StpUtil.getSession().set(Group.GROUP, userInfo.getGroup());
             StpUtil.getSession().set(Zone.ZONE, userInfo.getZone());
+        } else if(user.getRid() == Role.SCHOOL){
+            School school = schoolMapper.getByUId(user.getId());
+            StpUtil.getSession().set(Group.GROUP, school.getGroup());
+            StpUtil.getSession().set(Zone.ZONE, school.getZone());
         }
         // 添加角色id
         StpUtil.getSession().set(Role.ROLE, user.getRid());
-
-        // 更新用户状态
-        userMapper.updateStatus(user.getId(), 1, LocalDateTime.now());
-    }
-
-    @Override
-    public void logout(int uid){
-        StpUtil.logout(uid);
-        // 更新用户状态
-        userMapper.updateStatus(uid, 0, LocalDateTime.now());
     }
 
     @Override

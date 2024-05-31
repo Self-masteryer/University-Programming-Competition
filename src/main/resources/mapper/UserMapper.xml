@@ -21,4 +21,17 @@
         where id=#{id};
     </update>
 
+    <select id="queryStatusVO" resultType="com.lcx.pojo.VO.StatusVO">
+        select i.name,u.rid as role,i.`group`,i.zone,u.status,u.online_time from user u, user_info i
+        <where>
+            u.id=i.uid
+            <if test="name!=null and name!='' ">and i.name like concat('%',#{name},'%')</if>
+            <if test="rid!=null">and u.rid=#{rid}</if>
+            <if test="group!=null">and i.`group`=#{group}</if>
+            <if test="zone!=null">and i.zone=#{zone}</if>
+        </where>
+        order by u.rid asc,i.group asc,i.zone asc,u.status desc,u.online_time asc
+    </select>
+
+
 </mapper>

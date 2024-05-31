@@ -38,14 +38,8 @@ public class UserController {
     @PostMapping("/login")
     public Result login(@RequestBody @Validated UserLoginDTO userLoginDTO) {
         userService.login(userLoginDTO);
-        return Result.success("登录成功");
-    }
-
-    // 退出
-    @GetMapping("/logout")
-    public Result logout() {
-        userService.logout(StpUtil.getLoginIdAsInt());
-        return Result.success("退出成功");
+        log.info("用户{}，登录成功", StpUtil.getLoginIdAsInt());
+        return Result.success();
     }
 
     // 查询个人往届成绩
