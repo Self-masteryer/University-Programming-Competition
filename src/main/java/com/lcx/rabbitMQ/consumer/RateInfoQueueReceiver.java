@@ -13,20 +13,19 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 
 @Component
-@RabbitListener(queues = RabbitMQ.STATUS_INFO_QUEUE)
-public class StatusInfoQueueReceiver {
+@RabbitListener(queues = RabbitMQ.RATE_QUEUE)
+public class RateInfoQueueReceiver {
 
-    @Resource
-    private SuperviseWebSocketHandler superviseWebSocketHandler;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private SuperviseWebSocketHandler superviseWebSocketHandler;
 
     @RabbitHandler
-    public void receive(String StatusInfoJson) {
-        String value= stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.STATUS));
-        // superviseStatusWebSocket开启才发送信息，否则丢弃
+    public void receive(String message) {
+        String value= stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.RATE));
+        // superviseRateWebSocket开启才发送信息，否则丢弃
         if(Objects.equals(value, Supervise.SUPERVISE_OPEN))
-            superviseWebSocketHandler.sendStatusInfo(StatusInfoJson);
+            superviseWebSocketHandler.sendStatusInfo(message);
     }
-
 }

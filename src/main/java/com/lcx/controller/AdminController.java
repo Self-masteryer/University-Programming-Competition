@@ -4,7 +4,9 @@ import cn.dev33.satoken.annotation.SaCheckRole;
 import com.lcx.common.result.PageResult;
 import com.lcx.common.result.Result;
 import com.lcx.pojo.DTO.*;
+import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.pojo.VO.ProcessVO;
+import com.lcx.pojo.VO.SingeScoreInfo;
 import com.lcx.service.AdminService;
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
@@ -56,7 +58,7 @@ public class AdminController {
     }
 
     // 分页查询往届成绩
-    @GetMapping("/preScore")
+    @GetMapping("/preGrade")
     public Result<PageResult> queryPreScore(PreScorePageQuery preScorePageQuery) {
         return Result.success(scoreService.queryPreScore(preScorePageQuery));
     }
@@ -77,5 +79,29 @@ public class AdminController {
     @GetMapping("/status")
     public Result<PageResult> queryStatus(StatusPageQuery statusPageQuery) {
         return Result.success(adminService.queryStatus(statusPageQuery));
+    }
+
+    // 查询实战环节评委打分情况、选手得分情况
+    @GetMapping("/practicalScoreInfo")
+    public Result<List<SingeScoreInfo>> queryPracticalScoreInfo(ScoreInfoQuery scoreInfoQuery) {
+        return Result.success(adminService.queryPracticalScoreInfo(scoreInfoQuery));
+    }
+
+    // 查询实战环节选手最终得分情况
+    @GetMapping("/practicalScore")
+    public Result<List<FinalSingleScore>> queryPracticalScore(ScoreQuery scoreQuery) {
+        return Result.success(adminService.queryPracticalScore(scoreQuery));
+    }
+
+    // 查询快问快答环节评委打分情况、选手得分情况
+    @GetMapping("/qAndAScoreInfo")
+    public Result<List<SingeScoreInfo>> queryQAndAScoreInfo(ScoreInfoQuery scoreInfoQuery) {
+        return Result.success(adminService.queryqAndAScoreInfo(scoreInfoQuery));
+    }
+
+    // 查询快问快答环节选手最终得分情况
+    @GetMapping("/qAndAScore")
+    public Result<List<FinalSingleScore>> queryQAndAScore(ScoreQuery scoreQuery) {
+        return Result.success(adminService.queryqAndAScore(scoreQuery));
     }
 }

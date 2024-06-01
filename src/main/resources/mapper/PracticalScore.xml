@@ -10,4 +10,21 @@
         </foreach>
     </select>
 
+    <select id="getScoreInfoList" resultType="com.lcx.pojo.VO.SingeScoreInfo">
+        select s.sign_num,s.uid,s.contestant_name,s.jid,s.judgement_name,s.score,i.`group`,i.zone
+        from practical_score s,user_info i
+        <where>
+            s.uid=i.uid
+            <if test="contestantName!=null and contestantName!='' ">
+                and s.contestant_name like concat('%',contestantName,'%')
+            </if>
+            <if test="judgementName!=null and judgementName!='' ">
+                and s.judgement_name like concat('%',judgement_name,'%')
+            </if>
+            <if test="group!=null">and i.`group`=#{group}</if>
+            <if test="zone!=null">and i.zone=#{zone}</if>
+        </where>
+        order by s.sign_num asc
+    </select>
+
 </mapper>

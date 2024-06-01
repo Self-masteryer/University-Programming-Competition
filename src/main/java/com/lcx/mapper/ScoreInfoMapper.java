@@ -1,9 +1,9 @@
 package com.lcx.mapper;
 
 import com.lcx.pojo.DAO.ScoreDAO;
+import com.lcx.pojo.DTO.ScoreQuery;
 import com.lcx.pojo.Entity.ScoreInfo;
-import com.lcx.pojo.Entity.SingleScore;
-import com.lcx.pojo.VO.CommonScore;
+import com.lcx.pojo.VO.FinalSingleScore;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -47,15 +47,19 @@ public interface ScoreInfoMapper {
     @Update("update score_info set seat_num=#{seatNum} where uid=#{uid}")
     void updateSeatNum(int uid, String seatNum);
 
-    List<SingleScore> getWrittenScoreList(String group, String zone);
+    List<com.lcx.pojo.Entity.SingleScore> getWrittenScoreList(String group, String zone);
 
-    CommonScore getPracticalScoreByUid(int uid);
+    FinalSingleScore getPracticalScoreByUid(int uid);
 
-    CommonScore getQAndAScoreByUid(int uid);
+    FinalSingleScore getQAndAScoreByUid(int uid);
 
     @Select("select id from score_info where uid=#{uid}")
     int getId(int uid);
 
     @Select("select uid,written_score,practical_score,q_and_a_score from score_info where `group`=#{grou} and zone=#{zone}")
     List<ScoreDAO> getScoreDAOByUid(String group, String zone);
+
+    List<FinalSingleScore> getPracticalScores(ScoreQuery scoreQuery);
+
+    List<FinalSingleScore> getQAndAScores(ScoreQuery scoreQuery);
 }

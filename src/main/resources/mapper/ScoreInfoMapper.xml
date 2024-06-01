@@ -9,14 +9,40 @@
         where ds.`group`=#{group} and ds.zone=#{zone};
     </select>
 
-    <select id="getPracticalScoreByUid" resultType="com.lcx.pojo.VO.CommonScore">
+    <select id="getPracticalScoreByUid" resultType="com.lcx.pojo.VO.FinalSingleScore">
         select c.uid,c.name,s.practical_score as score from contestant c,score_info s
         where c.uid=s.uid and c.uid=#{uid};
     </select>
 
-    <select id="getQAndAScoreByUid" resultType="com.lcx.pojo.VO.CommonScore">
+    <select id="getQAndAScoreByUid" resultType="com.lcx.pojo.VO.FinalSingleScore">
         select c.uid,c.name,s.q_and_a_score as score from contestant c,score_info s
         where c.uid=s.uid and c.uid=#{uid};
+
+    </select>
+    <select id="getPracticalScores" resultType="com.lcx.pojo.VO.FinalSingleScore">
+        select si.uid,ui.name,si.practical_score as score from score_info si ,user_info ui
+        <where>
+            si.uid=ui.uid
+            and si.practical_score is not null
+            <if test="contestantName!=null and contestantName!='' ">
+                and si,contestant_name like concat('%',contestantName,'%')
+            </if>
+            <if test="group!=null">and ui.`group`=#{group}</if>
+            <if test="zone!=null">and ui.zone=#{zone}</if>
+        </where>
+    </select>
+
+    <select id="getQAndAScores" resultType="com.lcx.pojo.VO.FinalSingleScore">
+        select si.uid,ui.name,si.q_and_a_score as score from score_info si ,user_info ui
+        <where>
+            si.uid=ui.uid
+            and si.practical_score !=null
+            <if test="contestantName!=null and contestantName!='' ">
+                and si,contestant_name like concat('%',contestantName,'%')
+            </if>
+            <if test="group!=null">and ui.`group`=#{group}</if>
+            <if test="zone!=null">and ui.zone=#{zone}</if>
+        </where>
     </select>
 
 </mapper>

@@ -2,7 +2,7 @@ package com.lcx.config;
 
 import com.lcx.handler.SuperviseWebSocketHandler;
 import com.lcx.handler.UserWebSocketHandler;
-import com.lcx.interceptor.SuperviseWebSocketHandshakeInterceptor;
+import com.lcx.interceptor.AdminWebSocketHandshakeInterceptor;
 import com.lcx.interceptor.UserWebsocketHandshakeInterceptor;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +26,14 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // 注册supervise端点
         registry.addHandler(superviseWebSocketHandler, "/supervise")
-                .addInterceptors(new SuperviseWebSocketHandshakeInterceptor())
+                .addInterceptors(new AdminWebSocketHandshakeInterceptor())
                 .setAllowedOrigins("*");
 
         // 注册user端点
         registry.addHandler(userWebSocketHandler, "/user")
                 .addInterceptors(new UserWebsocketHandshakeInterceptor())
                 .setAllowedOrigins("*");
+
     }
 
 }

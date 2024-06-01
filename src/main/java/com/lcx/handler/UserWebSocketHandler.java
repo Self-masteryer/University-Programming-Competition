@@ -3,6 +3,7 @@ package com.lcx.handler;
 
 import com.alibaba.fastjson2.JSON;
 import com.lcx.common.constant.RabbitMQ;
+import com.lcx.common.constant.Supervise;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.UserMapper;
 import com.lcx.pojo.DAO.StatusInfo;
@@ -41,8 +42,8 @@ public class UserWebSocketHandler extends TextWebSocketHandler {
         userMapper.updateStatus(uid, 1, LocalDateTime.now());
 
         // 判断是否向消息队列推送状态信息
-        String value = stringRedisTemplate.opsForValue().get(RedisUtil.SUPERVISE_KEY);
-        if(Objects.equals(value,RedisUtil.SUPERVISE_OPEN)){
+        String value = stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.STATUS));
+        if(Objects.equals(value, Supervise.SUPERVISE_OPEN)){
 
             // 构建json状态信息
             StatusInfo statusInfo = StatusInfo.builder().id(uid).status("在线").onlineTime(LocalDateTime.now()).build();
@@ -64,8 +65,8 @@ public class UserWebSocketHandler extends TextWebSocketHandler {
         userMapper.updateStatus(uid, 0, LocalDateTime.now());
 
         // 判断是否向消息队列推送状态信息
-        String value = stringRedisTemplate.opsForValue().get(RedisUtil.SUPERVISE_KEY);
-        if(Objects.equals(value,RedisUtil.SUPERVISE_OPEN)){
+        String value = stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.STATUS));
+        if(Objects.equals(value,Supervise.SUPERVISE_OPEN)){
 
             // 构建json状态信息
             StatusInfo statusInfo = StatusInfo.builder().id(uid).status("离线").onlineTime(LocalDateTime.now()).build();

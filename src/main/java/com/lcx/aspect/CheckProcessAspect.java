@@ -48,16 +48,16 @@ public class CheckProcessAspect {
         String process = methodSignature.getMethod().getAnnotation(CheckProcess.class).process();
         String step = methodSignature.getMethod().getAnnotation(CheckProcess.class).step();
 
-        // 判断是管理员还是主持人
+        // 判断是管理员还是主持人或评委
         SaSession session = StpUtil.getSession();
-        if (session.get(Role.ROLE).equals(Role.HOST)) {
-            group = session.getString(Group.GROUP);
-            zone = session.getString(Zone.ZONE);
-        } else {
+        if (session.get(Role.ROLE).equals(Role.ADMIN)) {
             Object[] args = joinPoint.getArgs();
             CompInfoDTO compInfoDTO = (CompInfoDTO) args[0];
             group = compInfoDTO.getGroup();
             zone = compInfoDTO.getZone();
+        } else {
+            group = session.getString(Group.GROUP);
+            zone = session.getString(Zone.ZONE);
         }
 
         checkProcess(process, step);
@@ -71,8 +71,10 @@ public class CheckProcessAspect {
 
         String[] processStep=Process.PROCESS_STEP;
         for(int i=0;i<processStep.length;i++)
-            if (processStep[i].equals(value))
+            if (processStep[i].equals(value)){
                 value=processStep[i+1];
+                break;
+            }
 
         //更新进程信息
         stringRedisTemplate.opsForValue().set(key, value);

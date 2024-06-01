@@ -2,6 +2,7 @@ package com.lcx.common.util;
 
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
+import com.lcx.common.exception.BaseException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -133,6 +134,16 @@ public class ConvertUtil {
             case "0" -> "离线";
             case "1" -> "在线";
             default -> null;
+        };
+    }
+
+    public static int parseSignNumInt(String signNumStr) {
+        int num=2*Integer.parseInt(signNumStr.substring(1));
+        char c=signNumStr.charAt(0);
+        return switch (c){
+            case 'A'->num-1;
+            case 'B'->num;
+            default -> throw new BaseException();// 异常
         };
     }
 }

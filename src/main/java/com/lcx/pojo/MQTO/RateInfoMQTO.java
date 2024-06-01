@@ -1,4 +1,4 @@
-package com.lcx.pojo.VO;
+package com.lcx.pojo.MQTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GroupScore {
+public class RateInfoMQTO {
 
-    private FinalSingleScore A;
-    private FinalSingleScore B;
+    private int uid;
+    private int jid;
+    private int score;
 
 }

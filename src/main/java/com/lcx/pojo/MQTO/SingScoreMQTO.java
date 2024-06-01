@@ -1,4 +1,4 @@
-package com.lcx.pojo.VO;
+package com.lcx.pojo.MQTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CommonScore {
+public class SingScoreMQTO {
 
     private int uid;
-    private String name;
     private float score;
 
 }

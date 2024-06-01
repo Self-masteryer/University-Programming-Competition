@@ -2,10 +2,13 @@ package com.lcx.service;
 
 
 import com.lcx.common.result.PageResult;
-import com.lcx.pojo.DTO.CompInfoDTO;
+import com.lcx.pojo.DTO.ScoreInfoQuery;
+import com.lcx.pojo.DTO.ScoreQuery;
 import com.lcx.pojo.DTO.SignUpTime;
 import com.lcx.pojo.DTO.StatusPageQuery;
+import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.pojo.VO.ProcessVO;
+import com.lcx.pojo.VO.SingeScoreInfo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,4 +29,12 @@ public interface AdminService {
     List<ProcessVO> queryProcess(String group, String zone);
 
     PageResult queryStatus(StatusPageQuery statusPageQuery);
+
+    List<SingeScoreInfo> queryPracticalScoreInfo(ScoreInfoQuery scoreInfoQuery);
+
+    List<FinalSingleScore> queryPracticalScore(ScoreQuery scoreQuery);
+
+    List<SingeScoreInfo> queryqAndAScoreInfo(ScoreInfoQuery scoreInfoQuery);
+
+    List<FinalSingleScore> queryqAndAScore(ScoreQuery scoreQuery);
 }

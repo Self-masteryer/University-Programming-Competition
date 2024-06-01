@@ -7,21 +7,26 @@ import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.RateException;
 import com.lcx.common.exception.SignNumOutOfBoundException;
+import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DTO.ScoreDTO;
 import com.lcx.pojo.Entity.*;
-import com.lcx.pojo.VO.ScoreVO;
+import com.lcx.pojo.MQTO.RateInfoMQTO;
+import com.lcx.pojo.MQTO.SingScoreMQTO;
 import com.lcx.pojo.VO.SignGroup;
 import com.lcx.service.JudgementService;
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class JudgementServiceImpl implements JudgementService {
@@ -36,10 +41,15 @@ public class JudgementServiceImpl implements JudgementService {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private ScoreService scoreService;
+    @Resource
+    private UserInfoMapper userInfoMapper;
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional
     public SignGroup getSignGroup(int signNum) {
+        // 查询范围异常
         if (signNum < 1 || signNum > 15)
             throw new SignNumOutOfBoundException(ErrorMessageConstant.SIGN_NUM_OUT_OF_BOUND);
 
@@ -57,6 +67,7 @@ public class JudgementServiceImpl implements JudgementService {
         if (num < 1 || num > 30)
             throw new SignNumOutOfBoundException(ErrorMessageConstant.SIGN_NUM_OUT_OF_BOUND);
 
+        // 查询redis，解析json数据，获得选手信息
         SaSession session = StpUtil.getSession();
         String key = RedisUtil.getSignsKey(session.getString(Group.GROUP), session.getString(Zone.ZONE));
         String jsonStr = stringRedisTemplate.opsForValue().get(key);
@@ -77,11 +88,22 @@ public class JudgementServiceImpl implements JudgementService {
         String group = StpUtil.getSession().getString(Group.GROUP);
         String zone = StpUtil.getSession().getString(Zone.ZONE);
 
-        // 分数
-        Score score = Score.builder().uid(uid)
-                .sid(scoreInfoMapper.getId(uid)).jid(jid)
-                .score(Integer.parseInt(scoreDTO.getScore())).build();
+        // 插入选手得分信息
+        Score score = Score.builder().contestantName(userInfoMapper.getNameByUid(uid))
+                .sid(scoreInfoMapper.getId(uid)).judgementName(userInfoMapper.getNameByUid(jid))
+                .signNum(ConvertUtil.parseSignNumInt(scoreInfoMapper.getSignNum(uid))).jid(jid)
+                .score(Integer.parseInt(scoreDTO.getScore())).uid(uid).build();
         practicalScoreMapper.insert(score);
+
+        // 判断管理员是否在监听，监听则发送评委打分信息
+        String value=stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.RATE));
+        if(Objects.equals(value,Supervise.SUPERVISE_OPEN)){
+            // 构建score消息队列参数模型
+            RateInfoMQTO rateInfoMQTO = new RateInfoMQTO();
+            BeanUtils.copyProperties(score, rateInfoMQTO);
+            String scoreJson = JSON.toJSONString(rateInfoMQTO);
+            rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.RATE_ROUTE,scoreJson);
+        }
 
         synchronized (JudgementServiceImpl.class) {
 
@@ -95,8 +117,17 @@ public class JudgementServiceImpl implements JudgementService {
                 List<Float> scores = practicalScoreMapper.getScoresByUid(uid);
                 float sum = 0;
                 for (Float s : scores) sum += s;
+                float aver=sum / 5;
                 // 插入平均分
-                scoreInfoMapper.updatePracticalScoreByUid(uid, sum / 5);
+                scoreInfoMapper.updatePracticalScoreByUid(uid, aver);
+
+                // 判断管理员是否在监听，监听则发送选手得分信息
+                if(Objects.equals(value,Supervise.SUPERVISE_OPEN)){
+                    // 构建singleScore消息队列参数模型
+                    SingScoreMQTO singScoreMQTO = SingScoreMQTO.builder().uid(uid).score(aver).build();
+                    String singScoreJson = JSON.toJSONString(singScoreMQTO);
+                    rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.RATE_ROUTE,singScoreJson);
+                }
 
                 // 删除rateTimes
                 stringRedisTemplate.delete(key);
@@ -113,17 +144,18 @@ public class JudgementServiceImpl implements JudgementService {
 
                     // 推进流程
                     key = RedisUtil.getProcessKey(group, zone);
-                    String value = RedisUtil.getProcessValue(Process.PRACTICE, Step.NEXT);
+                    value = RedisUtil.getProcessValue(Process.PRACTICE, Step.NEXT);
                     stringRedisTemplate.opsForValue().set(key, value);
 
-                    // 删除signGroups
+                    // 保存signGroups数据
                     key = RedisUtil.getSignGroupsKey(group, zone);
                     String json = stringRedisTemplate.opsForValue().get(key);
-                    // 保存signGroups数据
+                    // 解析json数据
                     List<SignGroup> signGroups = JSON.parseArray(json, SignGroup.class);
+                    // 删除signGroups
                     stringRedisTemplate.delete(key);
 
-                    // 存储signs
+                    // 存储个人签号
                     List<Student> signs = new ArrayList<>();
                     for (SignGroup signGroup : signGroups) {
                         signs.add(signGroup.getA());
@@ -150,10 +182,21 @@ public class JudgementServiceImpl implements JudgementService {
         String zone = StpUtil.getSession().getString(Zone.ZONE);
 
         // 插入实战成绩
-        Score score = Score.builder().uid(uid)
-                .sid(scoreInfoMapper.getId(uid)).jid(jid)
-                .score(Integer.parseInt(scoreDTO.getScore())).build();
+        Score score = Score.builder().contestantName(userInfoMapper.getNameByUid(uid))
+                .sid(scoreInfoMapper.getId(uid)).judgementName(userInfoMapper.getNameByUid(jid))
+                .signNum(ConvertUtil.parseSignNumInt(scoreInfoMapper.getSignNum(uid)))
+                .score(Integer.parseInt(scoreDTO.getScore())).uid(uid).jid(jid).build();
         qAndAScoreMapper.insert(score);
+
+        // 判断管理员是否在监听，监听则发送评委打分信息
+        String value=stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.RATE));
+        if(Objects.equals(value,Supervise.SUPERVISE_OPEN)){
+            // 构建score消息队列参数模型
+            RateInfoMQTO rateInfoMQTO = new RateInfoMQTO();
+            BeanUtils.copyProperties(score, rateInfoMQTO);
+            String scoreJson = JSON.toJSONString(rateInfoMQTO);
+            rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.RATE_ROUTE,scoreJson);
+        }
 
         synchronized (JudgementServiceImpl.class) {
 
@@ -167,8 +210,17 @@ public class JudgementServiceImpl implements JudgementService {
                 List<Float> scores = qAndAScoreMapper.getScoresByUid(uid);
                 float sum = 0;
                 for (Float s : scores) sum += s;
+                float aver=sum / 5;
                 // 插入平均分
-                scoreInfoMapper.updateQAndAScoreByUid(uid, sum / 5);
+                scoreInfoMapper.updateQAndAScoreByUid(uid, aver);
+
+                // 判断管理员是否在监听，监听则发送选手得分信息
+                if(Objects.equals(value,Supervise.SUPERVISE_OPEN)){
+                    // 构建singleScore消息队列参数模型
+                    SingScoreMQTO singScoreMQTO = SingScoreMQTO.builder().uid(uid).score(aver).build();
+                    String singScoreJson = JSON.toJSONString(singScoreMQTO);
+                    rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.RATE_ROUTE,singScoreJson);
+                }
 
                 // 删除rateTimes
                 stringRedisTemplate.delete(key);
@@ -185,7 +237,7 @@ public class JudgementServiceImpl implements JudgementService {
 
                     // 推进流程
                     key = RedisUtil.getProcessKey(group, zone);
-                    String value = RedisUtil.getProcessValue(Process.Q_AND_A, Step.NEXT);
+                    value = RedisUtil.getProcessValue(Process.Q_AND_A, Step.NEXT);
                     stringRedisTemplate.opsForValue().set(key, value);
 
                     // 删除signs

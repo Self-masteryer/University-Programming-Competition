@@ -3,7 +3,7 @@ package com.lcx.mapper;
 import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.Entity.Contestant;
 import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.ScoreVO;
+import com.lcx.pojo.VO.GrageVO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -36,7 +36,7 @@ public interface ContestantMapper {
     @Select("select uid from contestant where `group`=#{group} and zone=#{zone}")
     List<Integer> getUidListByGroupAndZone(String group, String zone);
 
-    List<ScoreVO> getScoreVoListByGroupAndZone(String group, String zone);
+    List<GrageVO> getScoreVoListByGroupAndZone(String group, String zone);
 
     void deleteByUidAndZone(Integer uid, String zone);
 }

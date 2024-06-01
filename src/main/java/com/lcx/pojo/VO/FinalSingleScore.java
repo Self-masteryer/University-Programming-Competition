@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GroupScore {
+public class FinalSingleScore {
 
-    private FinalSingleScore A;
-    private FinalSingleScore B;
+    private int uid;// 避免同名
+    private String name;
+    private float score;
 
 }

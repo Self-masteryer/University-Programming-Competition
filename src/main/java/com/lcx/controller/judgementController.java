@@ -23,9 +23,9 @@ public class judgementController {
     @Resource
     private JudgementService judgementService;
 
-    // 查看分组名单
+    // 查看实战对决分组名单
     @GetMapping("/signGroup/{signNum}")
-    @CheckProcess(step = Step.RATE)
+    @CheckProcess(process = Process.PRACTICE, step = Step.RATE)
     public Result<SignGroup> getSignGroup(@PathVariable int signNum) {
         return Result.success(judgementService.getSignGroup(signNum));
     }
@@ -40,7 +40,7 @@ public class judgementController {
 
     // 查询快问快答选手
     @GetMapping("/contestant/{num}")
-    @CheckProcess(step = Step.RATE)
+    @CheckProcess(process = Process.Q_AND_A,step = Step.RATE)
     public Result<Student> getContestant(@PathVariable int num) {
         return Result.success(judgementService.getContestant(num));
     }

@@ -12,6 +12,7 @@ import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.Entity.*;
 import com.lcx.pojo.VO.*;
+import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
@@ -156,7 +157,7 @@ public class HostServiceImpl implements HostService {
         }
         //按座位号升序排序
         seatTable.sort(Comparator.comparingInt(o -> Integer.parseInt(
-                o.getSeatNum().substring(o.getSeatNum().lastIndexOf(":")+1))));
+                o.getSeatNum().substring(o.getSeatNum().lastIndexOf(":") + 1))));
 
         return seatTable;
     }
@@ -164,16 +165,16 @@ public class HostServiceImpl implements HostService {
     // 按笔试成绩筛选
     @Override
     @Transactional
-    public List<SingleScore> scoreFilter(String group, String zone) {
+    public List<com.lcx.pojo.Entity.SingleScore> scoreFilter(String group, String zone) {
         // 查询成绩单
-        List<SingleScore> scores = scoreInfoMapper
+        List<com.lcx.pojo.Entity.SingleScore> scores = scoreInfoMapper
                 .getWrittenScoreList(group, zone);
         // 按笔试成绩降序排序
-        scores.sort(Comparator.comparingInt(SingleScore::getScore).reversed());
+        scores.sort(Comparator.comparingInt(com.lcx.pojo.Entity.SingleScore::getScore).reversed());
 
         // 添加到written_score表
         for (int i = 0; i < scores.size(); i++) {
-            SingleScore singleScore = scores.get(i);
+            com.lcx.pojo.Entity.SingleScore singleScore = scores.get(i);
             singleScore.setRanking(i + 1);
             writtenScoreMapper.insert(singleScore);
         }
@@ -200,10 +201,10 @@ public class HostServiceImpl implements HostService {
         List<SignGroup> signGroups = groupDraw(students);
 
         // 序列化
-        String jasonStr= JSON.toJSONString(signGroups);
-        String key=RedisUtil.getSignGroupsKey(group,zone);
+        String jasonStr = JSON.toJSONString(signGroups);
+        String key = RedisUtil.getSignGroupsKey(group, zone);
         // 将分组信息存进redis
-        stringRedisTemplate.opsForValue().set(key,jasonStr);
+        stringRedisTemplate.opsForValue().set(key, jasonStr);
 
         // 更新成绩信息
         for (SignGroup signGroup : signGroups) {
@@ -217,9 +218,9 @@ public class HostServiceImpl implements HostService {
     @Override
     @Transactional
     public void exportScoreToPdf(String group, String zone, HttpServletResponse response) {
-        List<ScoreVO> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
+        List<GrageVO> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
         // 降序排序
-        scoreInfoList.sort(Comparator.comparingDouble(ScoreVO::getFinalScore).reversed());
+        scoreInfoList.sort(Comparator.comparingDouble(GrageVO::getFinalScore).reversed());
 
         // 将group,zone转换为中文
         group = ConvertUtil.parseGroupStr(group);
@@ -247,15 +248,23 @@ public class HostServiceImpl implements HostService {
             // 插入数据
             int i = 1;
             String key = "fill_";
-            for (ScoreVO score : scoreInfoList) {
-                form.setField(key + i, score.getName());i++;
-                form.setField(key + i, group);i++;
-                form.setField(key + i, zone);i++;
-                form.setField(key + i, score.getSeatNum());i++;
-                form.setField(key + i, String.valueOf(score.getWrittenScore()));i++;
-                form.setField(key + i, String.valueOf(score.getPracticalScore()));i++;
-                form.setField(key + i, String.valueOf(score.getQAndAScore()));i++;
-                form.setField(key + i, String.valueOf(score.getFinalScore()));i++;
+            for (GrageVO score : scoreInfoList) {
+                form.setField(key + i, score.getName());
+                i++;
+                form.setField(key + i, group);
+                i++;
+                form.setField(key + i, zone);
+                i++;
+                form.setField(key + i, score.getSeatNum());
+                i++;
+                form.setField(key + i, String.valueOf(score.getWrittenScore()));
+                i++;
+                form.setField(key + i, String.valueOf(score.getPracticalScore()));
+                i++;
+                form.setField(key + i, String.valueOf(score.getQAndAScore()));
+                i++;
+                form.setField(key + i, String.valueOf(score.getFinalScore()));
+                i++;
             }
 
             // 如果为false那么生成的PDF文件还能编辑
@@ -283,6 +292,7 @@ public class HostServiceImpl implements HostService {
         }
     }
 
+    // 分组抽签算法
     public List<SignGroup> groupDraw(List<Student> students) {
         // 创建一个映射来跟踪每个学校的选手
         Map<String, List<Student>> schoolStudents = new HashMap<>();
@@ -336,6 +346,7 @@ public class HostServiceImpl implements HostService {
         return signGroups;
     }
 
+    // 插入成绩信息
     @Override
     public void insertScoreInfo(String group, String zone) {
         List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
@@ -347,15 +358,17 @@ public class HostServiceImpl implements HostService {
         }
     }
 
+    // 查询实战对决分数
     @Override
     public GroupScore getGroupScore(int aUid, int bUid) {
-    CommonScore A = scoreInfoMapper.getPracticalScoreByUid(aUid);
-        CommonScore B = scoreInfoMapper.getPracticalScoreByUid(bUid);
+        FinalSingleScore A = scoreInfoMapper.getPracticalScoreByUid(aUid);
+        FinalSingleScore B = scoreInfoMapper.getPracticalScoreByUid(bUid);
         return GroupScore.builder().A(A).B(B).build();
     }
 
+    // 查询快问快答分数
     @Override
-    public CommonScore getQAndAScore(int uid) {
+    public FinalSingleScore getQAndAScore(int uid) {
         return scoreInfoMapper.getQAndAScoreByUid(uid);
     }
 

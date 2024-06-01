@@ -1,7 +1,6 @@
 package com.lcx.service;
 
-import com.lcx.pojo.Entity.SingleScore;
-import com.lcx.pojo.VO.CommonScore;
+import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.pojo.VO.GroupScore;
 import com.lcx.pojo.VO.SeatInfo;
 import com.lcx.pojo.VO.SignGroup;
@@ -20,7 +19,7 @@ public interface HostService {
 
     List<SeatInfo> seatDraw(String group ,String zone);
 
-    List<SingleScore> scoreFilter(String group , String zone);
+    List<com.lcx.pojo.Entity.SingleScore> scoreFilter(String group , String zone);
 
     List<SignGroup> groupDraw(String group ,String zone);
 
@@ -30,5 +29,5 @@ public interface HostService {
 
     GroupScore getGroupScore(int aUid, int bUid);
 
-    CommonScore getQAndAScore(int uid);
+    FinalSingleScore getQAndAScore(int uid);
 }

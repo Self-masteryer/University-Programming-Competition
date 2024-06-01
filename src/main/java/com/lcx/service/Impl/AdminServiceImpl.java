@@ -11,10 +11,14 @@ import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RandomStringUtils;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
+import com.lcx.pojo.DTO.ScoreInfoQuery;
+import com.lcx.pojo.DTO.ScoreQuery;
 import com.lcx.pojo.DTO.SignUpTime;
 import com.lcx.pojo.DTO.StatusPageQuery;
 import com.lcx.pojo.Entity.*;
+import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.pojo.VO.ProcessVO;
+import com.lcx.pojo.VO.SingeScoreInfo;
 import com.lcx.pojo.VO.StatusVO;
 import com.lcx.service.AdminService;
 import com.lcx.service.HostService;
@@ -49,7 +53,12 @@ public class AdminServiceImpl implements AdminService {
     private ContestantMapper contestantMapper;
     @Resource
     private HostService hostService;
-
+    @Resource
+    private PracticalScoreMapper practicalScoreMapper;
+    @Resource
+    private QAndAScoreMapper qAndAScoreMapper;
+    @Resource
+    private ScoreInfoMapper scoreInfoMapper;
 
     @Override
     @Transactional
@@ -323,7 +332,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public PageResult queryStatus(StatusPageQuery statusPageQuery) {
         PageHelper.startPage(statusPageQuery.getPageNo(), statusPageQuery.getPageSize());
-        Page<StatusVO> page=userMapper.queryStatusVO(statusPageQuery);
+        Page<StatusVO> page = userMapper.queryStatusVO(statusPageQuery);
         List<StatusVO> statusVOList = page.getResult();
         for (StatusVO statusVO : statusVOList) {
             statusVO.setRole(ConvertUtil.parseRoleStr(statusVO.getRole()));
@@ -332,6 +341,40 @@ public class AdminServiceImpl implements AdminService {
             statusVO.setStatus(ConvertUtil.parseStatusStr(statusVO.getStatus()));
         }
         return new PageResult(page.getTotal(), statusVOList);
+    }
+
+    // 查询实战环节评委打分情况、选手得分情况
+    @Override
+    public List<SingeScoreInfo> queryPracticalScoreInfo(ScoreInfoQuery scoreInfoQuery) {
+        List<SingeScoreInfo> singeScoreInfoList = practicalScoreMapper.getScoreInfoList(scoreInfoQuery);
+        for (SingeScoreInfo singeScoreInfo : singeScoreInfoList) {
+            singeScoreInfo.setGroup(ConvertUtil.parseGroupStr(singeScoreInfo.getGroup()));
+            singeScoreInfo.setZone(ConvertUtil.parseZoneStr(singeScoreInfo.getZone()));
+        }
+        return singeScoreInfoList;
+    }
+
+    // 查询实战环节选手最终得分情况
+    @Override
+    public List<FinalSingleScore> queryPracticalScore(ScoreQuery scoreQuery) {
+        return scoreInfoMapper.getPracticalScores(scoreQuery);
+    }
+
+    // 查询快问快答环节评委打分情况、选手得分情况
+    @Override
+    public List<SingeScoreInfo> queryqAndAScoreInfo(ScoreInfoQuery scoreInfoQuery) {
+        List<SingeScoreInfo> singeScoreInfoList = qAndAScoreMapper.getScoreInfoList(scoreInfoQuery);
+        for (SingeScoreInfo singeScoreInfo : singeScoreInfoList) {
+            singeScoreInfo.setGroup(ConvertUtil.parseGroupStr(singeScoreInfo.getGroup()));
+            singeScoreInfo.setZone(ConvertUtil.parseZoneStr(singeScoreInfo.getZone()));
+        }
+        return singeScoreInfoList;
+    }
+
+    // 查询快问快答环节选手最终得分情况
+    @Override
+    public List<FinalSingleScore> queryqAndAScore(ScoreQuery scoreQuery) {
+        return scoreInfoMapper.getQAndAScores(scoreQuery);
     }
 
     private ProcessVO getProcessVO(String group, String zone) {

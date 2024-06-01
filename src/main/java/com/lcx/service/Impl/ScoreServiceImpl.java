@@ -1,14 +1,10 @@
 package com.lcx.service.Impl;
 
-import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.lcx.common.constant.*;
-import com.lcx.common.constant.Process;
-import com.lcx.common.exception.process.ProcessStatusError;
 import com.lcx.common.result.PageResult;
-import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DAO.ScoreDAO;
 import com.lcx.pojo.DTO.PreScorePageQuery;
@@ -17,7 +13,7 @@ import com.lcx.pojo.Entity.PreScore;
 import com.lcx.pojo.Entity.ScoreInfo;
 import com.lcx.pojo.Entity.StudentScore;
 import com.lcx.pojo.VO.PreScoreVO;
-import com.lcx.pojo.VO.ScoreVO;
+import com.lcx.pojo.VO.GrageVO;
 import com.lcx.pojo.VO.SingleScoreVO;
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
@@ -108,15 +104,15 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     @Transactional
     public void addStudentScore(String group, String zone) {
-        List<ScoreVO> scoreInfoList = contestantMapper
+        List<GrageVO> scoreInfoList = contestantMapper
                 .getScoreVoListByGroupAndZone(group, zone);
-        scoreInfoList.sort(Comparator.comparingDouble(ScoreVO::getFinalScore).reversed());
+        scoreInfoList.sort(Comparator.comparingDouble(GrageVO::getFinalScore).reversed());
 
         int session = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get("session")));
         for (int i = 0; i < 5; i++) {
-            ScoreVO scoreVo = scoreInfoList.get(i);
-            StudentScore studentScore = StudentScore.builder().name(scoreVo.getName()).idCard(scoreVo.getIdCard())
-                    .school(scoreVo.getSchool()).session(session).score(scoreVo.getFinalScore()).build();
+            GrageVO grageVo = scoreInfoList.get(i);
+            StudentScore studentScore = StudentScore.builder().name(grageVo.getName()).idCard(grageVo.getIdCard())
+                    .school(grageVo.getSchool()).session(session).score(grageVo.getFinalScore()).build();
             if (i < 2) studentScore.setPrize(Prize.PROVINCIAL_FIRST_PRIZE);
             else studentScore.setPrize(Prize.PROVINCIAL_SECOND_PRIZE);
 

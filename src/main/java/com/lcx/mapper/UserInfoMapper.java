@@ -27,4 +27,6 @@ public interface UserInfoMapper {
     @Select("select uid from user_info where `group`=#{group} and zone=#{zone}")
     List<Integer> getUidListByGroupAndZone(String group, String zone);
 
+    @Select("select name from user_info where uid=#{uid}")
+    String getNameByUid(int uid);
 }

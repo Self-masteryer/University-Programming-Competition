@@ -1,11 +1,11 @@
 package com.lcx.common.util;
 
 
+import com.lcx.common.constant.Supervise;
+
 public class RedisUtil {
 
-    public static final String SUPERVISE_KEY = "supervise";
-    public static final String SUPERVISE_OPEN = "1";
-    public static final String SUPERVISE_CLOSE = "0";
+
     public static final String RATE_TIMES = "rate_times";
     public static final String RATE_NUMS = "rate_nums";
 
@@ -35,5 +35,9 @@ public class RedisUtil {
 
     public static String stringNumAddOne(String num) {
         return num == null ? "1" : String.valueOf(Integer.parseInt(num) + 1);
+    }
+
+    public static String getSuperviseKey(String event){
+        return Supervise.SUPERVISE + ":" + event;
     }
 }

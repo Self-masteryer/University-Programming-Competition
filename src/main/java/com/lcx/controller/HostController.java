@@ -9,12 +9,9 @@ import com.lcx.annotation.CheckProcess;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.result.Result;
-import com.lcx.common.util.ConvertUtil;
 import com.lcx.mapper.UserInfoMapper;
 import com.lcx.pojo.DTO.CompInfoDTO;
-import com.lcx.pojo.Entity.UserInfo;
-import com.lcx.pojo.Entity.SingleScore;
-import com.lcx.pojo.VO.CommonScore;
+import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.pojo.VO.GroupScore;
 import com.lcx.pojo.VO.SeatInfo;
 import com.lcx.pojo.VO.SignGroup;
@@ -86,9 +83,9 @@ public class HostController {
     // 按笔试成绩筛选
     @PostMapping("/scoreFilter")
     @CheckProcess(process = Process.WRITTEN, step = Step.SCORE_FILTER)
-    public Result<List<SingleScore>> scoreFilter(@RequestBody CompInfoDTO compInfoDTO) {
+    public Result<List<com.lcx.pojo.Entity.SingleScore>> scoreFilter(@RequestBody CompInfoDTO compInfoDTO) {
         SaSession session = StpUtil.getSession();
-        List<SingleScore> scoreList;
+        List<com.lcx.pojo.Entity.SingleScore> scoreList;
 
         if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             scoreList = hostService.scoreFilter(session.getString(Group.GROUP), session.getString(Zone.ZONE));
@@ -123,7 +120,7 @@ public class HostController {
     // 查询快问快答成绩
     @GetMapping("/qAndAScore")
     @CheckProcess(process = Process.Q_AND_A, step = Step.RATE)
-    public Result<CommonScore> getQAndAScore(int uid) {
+    public Result<FinalSingleScore> getQAndAScore(int uid) {
         return Result.success(hostService.getQAndAScore(uid));
     }
 

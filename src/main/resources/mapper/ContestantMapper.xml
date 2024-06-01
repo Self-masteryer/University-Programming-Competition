@@ -20,7 +20,7 @@
         where c.uid=ds.uid and c.`group`=#{group} and c.zone=#{zone};
     </select>
 
-    <select id="getScoreVoListByGroupAndZone" resultType="com.lcx.pojo.VO.ScoreVO">
+    <select id="getScoreVoListByGroupAndZone" resultType="com.lcx.pojo.VO.GrageVO">
         select c.name,c.school,c.id_card,c.`group`,c.zone,
                s.seat_num,s.written_score,s.practical_score,s.q_and_a_score,s.final_score
         from contestant c,score_info s where c.uid=s.uid and c.`group`=#{group} and c.zone=#{zone};

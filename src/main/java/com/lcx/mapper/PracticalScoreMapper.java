@@ -1,6 +1,8 @@
 package com.lcx.mapper;
 
+import com.lcx.pojo.DTO.ScoreInfoQuery;
 import com.lcx.pojo.Entity.Score;
+import com.lcx.pojo.VO.SingeScoreInfo;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,8 +13,8 @@ import java.util.List;
 @Mapper
 public interface PracticalScoreMapper {
 
-    @Insert("insert into practical_score (uid, sid, jid, score) " +
-            "value (#{uid},#{sid},#{jid},#{score})")
+    @Insert("insert into practical_score (sign_num, uid, contestant_name, sid, jid, judgement_name, score) " +
+            "value (#{signNum},#{uid},#{contestantName},#{sid},#{jid},#{judgementName},#{score})")
     void insert(Score score);
 
     int getCountByUidList(List<Integer> uidList);
@@ -26,4 +28,5 @@ public interface PracticalScoreMapper {
     @Delete("delete from practical_score where uid=#{uid}")
     void deleteByUid(Integer uid);
 
+    List<SingeScoreInfo> getScoreInfoList(ScoreInfoQuery scoreInfoQuery);
 }
