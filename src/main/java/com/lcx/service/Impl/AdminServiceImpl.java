@@ -279,6 +279,9 @@ public class AdminServiceImpl implements AdminService {
         // 插入选手成绩信息
         hostService.insertScoreInfo("BK", Zone.N);
         hostService.insertScoreInfo("GZ", Zone.N);
+
+        //删除完赛数量
+        stringRedisTemplate.delete(RedisUtil.FINISH_COMPETITION_NUM);
     }
 
     @Override

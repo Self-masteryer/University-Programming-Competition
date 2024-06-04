@@ -8,6 +8,8 @@ public class RedisUtil {
 
     public static final String RATE_TIMES = "rate_times";
     public static final String RATE_NUMS = "rate_nums";
+    public static final String COMPETITION = "competition";
+    public static final String FINISH_COMPETITION_NUM = "finish_competition_num";
 
     public static String getProcessKey(String group, String zone) {
         return "process" + ":" + group + ":" + zone;

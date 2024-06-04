@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.lcx.mapper.SystemMysqlBackupsMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into mysql_backups (mysql_ip, mysql_port, mysql_cmd, database_name,
+            backups_path, backups_name, operation, status, create_time)
+            value (#{mysqlIp}, #{mysqlPort}, #{mysqlCmd}, #{databaseName}, #{backupsPath},
+                   #{backupsName}, #{operation},#{status}, #{createTime});
+    </insert>
+
+</mapper>

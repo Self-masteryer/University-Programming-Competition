@@ -9,6 +9,7 @@ import com.lcx.pojo.VO.ProcessVO;
 import com.lcx.pojo.VO.SingeScoreInfo;
 import com.lcx.service.AdminService;
 import com.lcx.service.ScoreService;
+import com.lcx.taskSchedule.AutoBackupsService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ public class AdminController {
     private AdminService adminService;
     @Resource
     private ScoreService scoreService;
+    @Resource
+    private AutoBackupsService autoBackupsService;
 
     // 通过excel表格新增用户
     @PostMapping("/createUserByExcel")
@@ -47,6 +50,8 @@ public class AdminController {
     public Result setSignUpTime(@RequestBody SignUpTime signUpTime) {
         log.info("设置报名时间:{}~{}",signUpTime.getBegin(),signUpTime.getEnd());
         adminService.setSignUpTime(signUpTime);
+        // 启动数据库自动备份
+        autoBackupsService.StartAutoBackups();
         return Result.success("报名时间设置成功");
     }
 
