@@ -32,17 +32,21 @@ public class HostController {
 
     @Resource
     private HostService hostService;
-    @Resource
-    private UserInfoMapper userInfoMapper;
 
     // 开启比赛
     @PostMapping("/startDistrictCompetition")
     public Result startCompetition(@RequestBody CompInfoDTO compInfoDTO) {
         SaSession session = StpUtil.getSession();
-        if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
-            hostService.startCompetition(session.getString(Group.GROUP), session.getString(Zone.ZONE));
-        else// 管理员
-            hostService.startCompetition(compInfoDTO.getGroup(), compInfoDTO.getZone());
+        String group,zone;
+        if (session.getInt(Role.ROLE) == Role.HOST){
+            group=session.getString(Group.GROUP);
+            zone=session.getString(Zone.ZONE);
+        }else{
+            group=session.getString(compInfoDTO.getGroup());
+            zone=session.getString(compInfoDTO.getZone());
+        }
+        hostService.startCompetition(group,zone);
+        log.info("{}:{}已开启区赛",group,zone);
         return Result.success();
     }
 
@@ -77,6 +81,8 @@ public class HostController {
     @CheckProcess(process = Process.WRITTEN, step = Step.POST_WRITTEN_SCORE)
     public Result postWrittenScoreByExcel(@RequestParam("file") MultipartFile file) {
         hostService.postWrittenScoreByExcel(file);
+        SaSession session = StpUtil.getSession();
+        log.info("{}:{}成功上传笔试成绩",session.getString(Group.GROUP),session.getString(Zone.ZONE));
         return Result.success("成绩上传成功");
     }
 

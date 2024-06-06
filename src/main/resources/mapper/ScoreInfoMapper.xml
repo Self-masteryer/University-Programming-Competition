@@ -4,9 +4,9 @@
 <mapper namespace="com.lcx.mapper.ScoreInfoMapper">
 
     <select id="getWrittenScoreList" resultType="com.lcx.pojo.Entity.SingleScore">
-        select c.uid,c.name,ds.`group`,ds.zone,ds.seat_num,ds.written_score as score
-        from score_info ds left outer join contestant c on c.uid=ds.uid
-        where ds.`group`=#{group} and ds.zone=#{zone};
+        select c.uid,c.name,si.`group`,si.zone,si.seat_num,si.written_score as score
+        from score_info si left outer join contestant c on c.uid=si.uid
+        where si.`group`=#{group} and si.zone=#{zone};
     </select>
 
     <select id="getPracticalScoreByUid" resultType="com.lcx.pojo.VO.FinalSingleScore">

@@ -10,9 +10,7 @@ import com.lcx.service.ContestantService;
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/contestant")
@@ -27,7 +25,7 @@ public class ContestantController {
     // 查询座位号
     @GetMapping("/seatNum")
     @CheckQueryProcess(process = Process.WRITTEN, item = Item.NUM)
-    public Result<String> getSeatNum() {
+    public Result getSeatNum() {
         return Result.success(contestantService.getSeatNum(),"查询成功");
     }
 
@@ -44,4 +42,13 @@ public class ContestantController {
     public Result getWrittenScore() {
         return Result.success(scoreService.getWrittenScore(StpUtil.getLoginIdAsInt()),"查询成功");
     }
+
+    // 放弃国赛资格
+    @PostMapping("/waiverNatCompQual")
+    public Result waiverNatCompQual() {
+        contestantService.waiverNatCompQual();
+        log.info("ID:{}成功放弃国赛资格",StpUtil.getLoginIdAsInt());
+        return Result.success();
+    }
+
 }

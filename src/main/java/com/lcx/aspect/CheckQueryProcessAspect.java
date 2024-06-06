@@ -5,7 +5,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.annotation.CheckQueryProcess;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.exception.process.ProcessStatusError;
+import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.pojo.DTO.CompInfoDTO;
 import jakarta.annotation.Resource;
@@ -42,7 +42,7 @@ public class CheckQueryProcessAspect {
             // 检验是否为区赛,不为区赛则抛异常
             String competition = stringRedisTemplate.opsForValue().get("competition");
             if (competition == null || competition.equals(Process.NATIONAL))
-                throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+                throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
 
             if (item.equals(Item.SCORE)) flag = 3;
             else flag = 1;
@@ -54,7 +54,7 @@ public class CheckQueryProcessAspect {
         // <flag时查询到，表示未到能查询的流程
         for (int i = 0; i < flag; i++)
             if (value.equals(processStep[i]))
-                throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+                throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
 
     }
 

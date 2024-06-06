@@ -11,8 +11,8 @@ import org.apache.ibatis.annotations.Select;
 public interface WrittenScoreMapper {
 
 
-    @Insert("insert into written_score (name, `group`, zone, seat_num, score, ranking)" +
-            "value (#{name},#{group},#{zone},#{seatNum},#{score},#{ranking})")
+    @Insert("insert into written_score (uid,name, `group`, zone, seat_num, score, ranking)" +
+            "value (#{uid},#{name},#{group},#{zone},#{seatNum},#{score},#{ranking})")
     void insert(SingleScore singleScore);
 
     @Select("select name,`group`,zone,seat_num,score,ranking from written_score where uid=#{uid}")

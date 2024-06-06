@@ -44,6 +44,6 @@ public class SystemMysqlBackupsController {
         // 恢复数据库
         Object rollback = systemMysqlBackupsService
                 .rollback(smb, mysqlProperties.getUsername(), mysqlProperties.getPassword());
-        return Result.success(rollback);
+        return Result.success(rollback,"恢复成功");
     }
 }

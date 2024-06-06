@@ -4,6 +4,7 @@ import com.lcx.pojo.Entity.UserInfo;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -29,4 +30,7 @@ public interface UserInfoMapper {
 
     @Select("select name from user_info where uid=#{uid}")
     String getNameByUid(int uid);
+
+    @Update("update user_info set zone='N' where uid=#{uid}")
+    void setToNational(Integer uid);
 }

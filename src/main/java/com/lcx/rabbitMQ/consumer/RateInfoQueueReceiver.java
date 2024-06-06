@@ -3,7 +3,7 @@ package com.lcx.rabbitMQ.consumer;
 import com.lcx.common.constant.RabbitMQ;
 import com.lcx.common.constant.Supervise;
 import com.lcx.common.util.RedisUtil;
-import com.lcx.handler.SuperviseWebSocketHandler;
+import com.lcx.handler.SuperviseRateWebSocketHandler;
 import jakarta.annotation.Resource;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,13 +19,13 @@ public class RateInfoQueueReceiver {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
-    private SuperviseWebSocketHandler superviseWebSocketHandler;
+    private SuperviseRateWebSocketHandler superviseRateWebSocketHandler;
 
     @RabbitHandler
     public void receive(String message) {
         String value= stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.RATE));
         // superviseRateWebSocket开启才发送信息，否则丢弃
         if(Objects.equals(value, Supervise.SUPERVISE_OPEN))
-            superviseWebSocketHandler.sendStatusInfo(message);
+            superviseRateWebSocketHandler.sendRateInfo(message);
     }
 }

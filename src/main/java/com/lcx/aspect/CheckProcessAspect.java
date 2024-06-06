@@ -5,11 +5,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.annotation.CheckProcess;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.exception.process.ProcessStatusError;
+import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.UserInfoMapper;
 import com.lcx.pojo.DTO.CompInfoDTO;
-import com.lcx.pojo.Entity.UserInfo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -78,6 +77,7 @@ public class CheckProcessAspect {
 
         //更新进程信息
         stringRedisTemplate.opsForValue().set(key, value);
+        log.info("{}:{}已进入{}环节",group,zone,value);
     }
 
     private void checkProcess(String process, String step) {
@@ -87,6 +87,6 @@ public class CheckProcessAspect {
 
         String candidatedValue=RedisUtil.getProcessValue(process,step);
         if(!Objects.equals(candidatedValue,value))
-            throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+            throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
     }
 }

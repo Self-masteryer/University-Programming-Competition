@@ -34,31 +34,40 @@ public class AdminController {
     // 通过excel表格新增用户
     @PostMapping("/createUserByExcel")
     public void createUserByExcel(@RequestParam("file") MultipartFile file, HttpServletResponse response) {
-        log.info("管理员通过excel表格新增用户");
         adminService.addUserByExcel(file, response);
+        log.info("管理员通过excel表格设置管理员、裁判");
     }
 
     // 通过excel表格新增学校用户
     @PostMapping("/createSchoolByExcel")
     public void createSchoolByExcel(@RequestParam("file") MultipartFile file, HttpServletResponse response) {
-        log.info("管理员通过excel表格新增学校用户");
         adminService.addSchoolByExcel(file, response);
+        log.info("管理员通过excel表格新增学校用户");
     }
 
     // 设置报名时间
     @PostMapping("/setSignUpTime")
-    public Result setSignUpTime(@RequestBody SignUpTime signUpTime) {
-        log.info("设置报名时间:{}~{}",signUpTime.getBegin(),signUpTime.getEnd());
-        adminService.setSignUpTime(signUpTime);
+    public Result setSignUpTime(@RequestBody TimePeriod timePeriod) {
+        adminService.setSignUpTime(timePeriod);
         // 启动数据库自动备份
         autoBackupsService.StartAutoBackups();
+        log.info("设置报名时间:{}~{}", timePeriod.getBegin(), timePeriod.getEnd());
         return Result.success("报名时间设置成功");
+    }
+
+    // 修改放弃国赛资格时间
+    @PutMapping("/setWaiverNatQualTime")
+    public Result setWaiverNatQualTime(@RequestBody TimePeriod timePeriod) {
+        adminService.setWaiverNatQualTime(timePeriod);
+        log.info("成功修改放弃国赛资格时间段:{}~{}",timePeriod.getBegin(), timePeriod.getEnd());
+        return Result.success();
     }
 
     // 开启国赛
     @GetMapping("/startNationalCompetition")
     public Result startNationalCompetition() {
         adminService.startNationalCompetition();
+        log.info("管理员已开启国赛");
         return Result.success();
     }
 

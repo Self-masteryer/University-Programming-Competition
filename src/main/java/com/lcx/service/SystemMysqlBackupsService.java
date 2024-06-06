@@ -18,6 +18,6 @@ public interface SystemMysqlBackupsService{
     SystemMysqlBackups selectListId(int id);
 
     // 恢复数据库
-    Object rollback(SystemMysqlBackups smb, String userName, String password);
+    String rollback(SystemMysqlBackups smb, String userName, String password);
 
 }

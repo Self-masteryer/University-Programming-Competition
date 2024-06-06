@@ -3,6 +3,7 @@ package com.lcx.taskSchedule;
 import com.lcx.common.properties.MysqlProperties;
 import com.lcx.service.SystemMysqlBackupsService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ScheduledFuture;
 
 @Service
+@Slf4j
 public class AutoBackupsService {
 
     @Resource
@@ -26,13 +28,14 @@ public class AutoBackupsService {
         AutoBackupsScheduledFuture = taskScheduler.schedule(()-> systemMysqlBackupsService.mysqlBackups(mysqlProperties.getPath(),
                 mysqlProperties.getUrl(), mysqlProperties.getUsername(),
                 mysqlProperties.getPassword(), mysqlProperties.getDatabase()),new CronTrigger("0 0 0 * * ? "));// 每天00：00：00
+        log.info("自动备份已开启");
     }
 
     // 关闭自动备份
     public void StopAutoBackups() {
-        if(AutoBackupsScheduledFuture != null) {
+        if(AutoBackupsScheduledFuture != null)
             AutoBackupsScheduledFuture.cancel(true);
-        }
+        log.info("自动备份已关闭");
     }
 
 }

@@ -4,7 +4,9 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.lcx.common.constant.*;
+import com.lcx.common.constant.Process;
 import com.lcx.common.result.PageResult;
+import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DAO.ScoreDAO;
 import com.lcx.pojo.DTO.PreScorePageQuery;
@@ -22,10 +24,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ScoreServiceImpl implements ScoreService {
@@ -46,16 +46,16 @@ public class ScoreServiceImpl implements ScoreService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    // 添加往届成绩
     @Override
     public void addPreScore(String group, String zone) {
-        List<Integer> uidList = contestantMapper.getUidListByGroupAndZone(group, zone);
-        List<ScoreInfo> scoreInfoList = new ArrayList<>();
-        for (Integer uid : uidList) scoreInfoList.add(scoreInfoMapper.getByUid(uid));
+        List<ScoreInfo> scoreInfoList = scoreInfoMapper.getListByGroupAndZone(group,zone);
         scoreInfoList.sort(Comparator.comparingDouble(ScoreInfo::getFinalScore).reversed());
         for (int i = 0; i < scoreInfoList.size(); i++) {
             ScoreInfo scoreInfo = scoreInfoList.get(i);
             PreScore preScore = new PreScore();
             BeanUtils.copyProperties(scoreInfo, preScore);
+            preScore.setSchool(contestantMapper.getSchoolByUid(scoreInfo.getUid()));
             preScore.setRanking(i + 1);
 
             preScoreMapper.insert(preScore);
@@ -113,8 +113,13 @@ public class ScoreServiceImpl implements ScoreService {
             GrageVO grageVo = scoreInfoList.get(i);
             StudentScore studentScore = StudentScore.builder().name(grageVo.getName()).idCard(grageVo.getIdCard())
                     .school(grageVo.getSchool()).session(session).score(grageVo.getFinalScore()).build();
-            if (i < 2) studentScore.setPrize(Prize.PROVINCIAL_FIRST_PRIZE);
-            else studentScore.setPrize(Prize.PROVINCIAL_SECOND_PRIZE);
+            if(Objects.equals(stringRedisTemplate.opsForValue().get(RedisUtil.COMPETITION), Process.DISTRICT)){
+                if (i < 2) studentScore.setPrize(Prize.PROVINCIAL_FIRST_PRIZE);
+                else studentScore.setPrize(Prize.PROVINCIAL_SECOND_PRIZE);
+            }else{
+                if (i < 2) studentScore.setPrize(Prize.NATIONAL_FIRST_PRIZE);
+                else studentScore.setPrize(Prize.NATIONAL_SECOND_PRIZE);
+            }
 
             studentScoreMapper.insert(studentScore);
         }
@@ -128,7 +133,6 @@ public class ScoreServiceImpl implements ScoreService {
             scoreInfoMapper.deleteByUid(uid);// 成绩信息
             practicalScoreMapper.deleteByUid(uid);// 实战成绩
             qAndAScoreMapper.deleteByUid(uid);// 快问快打成绩
-            contestantMapper.deleteByUidAndZone(uid, zone);// 选手信息
         }
     }
 

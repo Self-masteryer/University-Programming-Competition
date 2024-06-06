@@ -1,7 +1,6 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.secure.BCrypt;
-import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.*;
 import com.lcx.common.exception.account.AccountException;
@@ -9,9 +8,8 @@ import com.lcx.common.exception.ContestantNumIsFullException;
 import com.lcx.common.exception.account.PasswordException;
 import com.lcx.common.exception.account.UsernameExistsException;
 import com.lcx.common.exception.account.UsernameModifiableException;
-import com.lcx.common.exception.time.SignUpTimeErrorException;
+import com.lcx.common.exception.time.TimePeriodErrorException;
 import com.lcx.common.util.RandomStringUtils;
-import com.lcx.controller.AdminController;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.SchoolMapper;
 import com.lcx.mapper.UserInfoMapper;
@@ -22,13 +20,10 @@ import com.lcx.pojo.VO.SignUpVO;
 import com.lcx.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -45,8 +40,6 @@ public class UserServiceImpl implements UserService {
     private ContestantMapper contestantMapper;
     @Resource
     private UserInfoMapper userInfoMapper;
-    @Resource
-    private RabbitTemplate rabbitTemplate;
 
     @Override
     public void login(UserLoginDTO userLoginDTO) {
@@ -81,13 +74,13 @@ public class UserServiceImpl implements UserService {
     public SignUpVO signUp(SignUpDTO signUpDTO) {
         String beginTime = stringRedisTemplate.opsForValue().get(Time.SIGN_UP_BEGIN_TIME);
         if (beginTime == null)
-            throw new SignUpTimeErrorException(ErrorMessageConstant.SIGN_UP_TIME_ERROR);
-        long begin = Long.parseLong(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(Time.SIGN_UP_BEGIN_TIME)));
+            throw new TimePeriodErrorException(ErrorMessageConstant.SIGN_UP_TIME_ERROR);
+        long begin = Long.parseLong(Objects.requireNonNull(beginTime));
         long end = Long.parseLong(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(Time.SIGN_UP_END_TIME)));
         long now = System.currentTimeMillis();
         // 报名时间异常
         if (now < begin || now > end)
-            throw new SignUpTimeErrorException(ErrorMessageConstant.SIGN_UP_TIME_ERROR);
+            throw new TimePeriodErrorException(ErrorMessageConstant.SIGN_UP_TIME_ERROR);
 
         // 判断选手数量是否已满
         int uId = StpUtil.getLoginIdAsInt();
@@ -146,6 +139,7 @@ public class UserServiceImpl implements UserService {
         return signUpVO;
     }
 
+    // 重置用户名和密码
     @Override
     public void resetUsernameAndPassword(ResetAccountDTO resetAccountDTO) {
 

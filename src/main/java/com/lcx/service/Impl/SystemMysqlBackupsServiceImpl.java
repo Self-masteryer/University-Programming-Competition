@@ -105,7 +105,7 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
 
     // 恢复数据库
     @Override
-    public Object rollback(SystemMysqlBackups smb, String userName, String password) {
+    public String rollback(SystemMysqlBackups smb, String userName, String password) {
         // 备份路径和文件名
         StringBuilder realFilePath = new StringBuilder().append(smb.getBackupsPath()).append(smb.getBackupsName());
         if (!FileUtil.exist(String.valueOf(realFilePath))) {
@@ -143,7 +143,7 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
         }
 
         systemMysqlBackupsMapper.update(smb);
-        return smb;
+        return smb.getBackupsName();
     }
 
 }

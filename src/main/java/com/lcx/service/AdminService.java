@@ -4,7 +4,7 @@ package com.lcx.service;
 import com.lcx.common.result.PageResult;
 import com.lcx.pojo.DTO.ScoreInfoQuery;
 import com.lcx.pojo.DTO.ScoreQuery;
-import com.lcx.pojo.DTO.SignUpTime;
+import com.lcx.pojo.DTO.TimePeriod;
 import com.lcx.pojo.DTO.StatusPageQuery;
 import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.pojo.VO.ProcessVO;
@@ -20,7 +20,7 @@ public interface AdminService {
 
     void addSchoolByExcel(MultipartFile file, HttpServletResponse response);
 
-    void setSignUpTime(SignUpTime signUpTime);
+    void setSignUpTime(TimePeriod timePeriod);
 
     void startNationalCompetition();
 
@@ -37,4 +37,6 @@ public interface AdminService {
     List<SingeScoreInfo> queryqAndAScoreInfo(ScoreInfoQuery scoreInfoQuery);
 
     List<FinalSingleScore> queryqAndAScore(ScoreQuery scoreQuery);
+
+    void setWaiverNatQualTime(TimePeriod timePeriod);
 }

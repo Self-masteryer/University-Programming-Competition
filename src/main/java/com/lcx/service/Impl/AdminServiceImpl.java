@@ -5,7 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.exception.process.ProcessStatusError;
+import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.result.PageResult;
 import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RandomStringUtils;
@@ -13,7 +13,7 @@ import com.lcx.common.util.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DTO.ScoreInfoQuery;
 import com.lcx.pojo.DTO.ScoreQuery;
-import com.lcx.pojo.DTO.SignUpTime;
+import com.lcx.pojo.DTO.TimePeriod;
 import com.lcx.pojo.DTO.StatusPageQuery;
 import com.lcx.pojo.Entity.*;
 import com.lcx.pojo.VO.FinalSingleScore;
@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -71,6 +72,7 @@ public class AdminServiceImpl implements AdminService {
             for (int i = 0; i < inExcel.getNumberOfSheets(); i++) {
                 //创建数据输入sheet
                 XSSFSheet inSheet = inExcel.getSheetAt(i);
+                if(inSheet==null) break;
                 String r = inSheet.getSheetName();
                 //创建账号输出sheet
                 XSSFSheet outSheet = outExcel.createSheet(r);
@@ -82,6 +84,7 @@ public class AdminServiceImpl implements AdminService {
                 int rid = ConvertUtil.parseRoleNum(r);
                 for (int j = 1; j <= inSheet.getLastRowNum(); j++) {
                     XSSFRow inRow = inSheet.getRow(j);
+                    if (inRow == null) break;
                     XSSFRow outRow = outSheet.createRow(j);
                     String IDCard = inRow.getCell(1).getStringCellValue();
                     UserInfo userInfo = userInfoMapper.getByIDCard(IDCard);
@@ -219,10 +222,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public void setSignUpTime(SignUpTime signUpTime) {
-        //设置报名时间
-        String begin = ConvertUtil.parseDateStr(signUpTime.getBegin());
-        String end = ConvertUtil.parseDateStr(signUpTime.getEnd());
+    public void setSignUpTime(TimePeriod timePeriod) {
+        // 设置报名时间
+        String begin = ConvertUtil.parseDateTimeStr(timePeriod.getBegin());
+        String end = ConvertUtil.parseDateTimeStr(timePeriod.getEnd());
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_BEGIN_TIME, begin);
         stringRedisTemplate.opsForValue().set(Time.SIGN_UP_END_TIME, end);
 
@@ -236,24 +239,22 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    public void setWaiverNatQualTime(TimePeriod timePeriod) {
+        String begin = ConvertUtil.parseDateTimeStr(timePeriod.getBegin());
+        String end = ConvertUtil.parseDateTimeStr(timePeriod.getEnd());
+        stringRedisTemplate.opsForValue().set(Time.WAIVER_NAT_QUAL_BEGIN_TIME, begin);
+        stringRedisTemplate.opsForValue().set(Time.WAIVER_NAT_QUAL_END_TIME, end);
+    }
+
+    // 开启国赛
+    @Override
+    @Transactional
     public void startNationalCompetition() {
-        // 判断区赛是否全部结束
-//        String[] group=Group.GROUP;
-//        String[] zone=Zone.DISTRICT_ZONE;
-//        String process= RedisUtil.getProcessValue(ProcessVO.FINAL,Step.NEXT);
-//        for(int i=0;i<group.length;i++){
-//            for(int j=0;j<zone.length;j++){
-//                String key=RedisUtil.getProcessKey(group[i],zone[j]);
-//                String value = stringRedisTemplate.opsForValue().get(key);
-//                if(!process.equals(value))
-//                    throw new ProcessStatusError(ErrorMessageConstant.DISTRICT_IS_ONGOING);
-//            }
-//        }
 
         // 判断区赛是否全部结束
-        int count = contestantMapper.getCountByGroupAndZone(null, Zone.N);
-        if (count != 60)
-            throw new ProcessStatusError(ErrorMessageConstant.DISTRICT_IS_ONGOING);
+        String num = stringRedisTemplate.opsForValue().get(RedisUtil.FINISH_COMPETITION_NUM);
+        if(!Objects.equals(num,"12"))
+            throw new ProcessStatusException("未满足国赛开启条件");
 
         // 清除redis中的进程信息
         String[] group = Group.GROUPS;
@@ -268,6 +269,10 @@ public class AdminServiceImpl implements AdminService {
         stringRedisTemplate.delete(Time.SIGN_UP_BEGIN_TIME);
         stringRedisTemplate.delete(Time.SIGN_UP_END_TIME);
 
+        // 清除redis中的弃赛时间信息
+        stringRedisTemplate.delete(Time.WAIVER_NAT_QUAL_BEGIN_TIME);
+        stringRedisTemplate.delete(Time.WAIVER_NAT_QUAL_END_TIME);
+
         // 将比赛设置为国赛
         stringRedisTemplate.opsForValue().set("competition", Process.NATIONAL);
         String key = RedisUtil.getProcessKey("BK", Zone.N);
@@ -275,6 +280,12 @@ public class AdminServiceImpl implements AdminService {
         stringRedisTemplate.opsForValue().set(key, value);
         key = RedisUtil.getProcessKey("GZ", Zone.N);
         stringRedisTemplate.opsForValue().set(key, value);
+
+        // 将选手设置为国赛选手
+        contestantMapper.setToNational();
+        List<Integer> uidList = contestantMapper.getUidList();
+        for (Integer uid : uidList)
+            userInfoMapper.setToNational(uid);
 
         // 插入选手成绩信息
         hostService.insertScoreInfo("BK", Zone.N);
@@ -284,10 +295,15 @@ public class AdminServiceImpl implements AdminService {
         stringRedisTemplate.delete(RedisUtil.FINISH_COMPETITION_NUM);
     }
 
+    // 设置为游客身份
     @Override
     @Transactional
     public void setAsTourist(String group, String zone) {
+        // 搜索赛区主持人、全部选手、评委
         List<Integer> uidList = userInfoMapper.getUidListByGroupAndZone(group, zone);
+        List<Integer> contestantUidList=contestantMapper.getUidListByGroupAndZone(group,zone);
+        // 移除晋级选手
+        uidList.removeAll(contestantUidList);
         for (Integer uid : uidList) {
             userMapper.updateRole(uid, Role.TOURIST);
             UserInfo userInfo = UserInfo.builder().uid(uid).group("").zone("").build();

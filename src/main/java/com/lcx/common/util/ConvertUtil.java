@@ -112,7 +112,7 @@ public class ConvertUtil {
         };
     }
 
-    public static LocalDateTime parseDate(String instantStr) {
+    public static LocalDateTime parseDateTime(String instantStr) {
         // 将字符串转换为长整型
         long instantLong = Long.parseLong(instantStr);
         // 使用Instant和ZoneId将时间戳转换为ZonedDateTime
@@ -123,7 +123,7 @@ public class ConvertUtil {
         return zonedDateTime.toLocalDateTime();
     }
 
-    public static String parseDateStr(LocalDateTime localDateTime) {
+    public static String parseDateTimeStr(LocalDateTime localDateTime) {
         // 转换为ZonedDateTime
         ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.systemDefault());
         return String.valueOf(zonedDateTime.toInstant().toEpochMilli());

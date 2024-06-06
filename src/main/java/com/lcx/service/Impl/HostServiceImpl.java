@@ -5,7 +5,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.*;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.exception.process.ProcessStatusError;
+import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.exception.process.StartCompetitionException;
 import com.lcx.common.util.ConvertUtil;
 import com.lcx.common.util.RedisUtil;
@@ -42,6 +42,8 @@ public class HostServiceImpl implements HostService {
     private ScoreInfoMapper scoreInfoMapper;
     @Resource
     private WrittenScoreMapper writtenScoreMapper;
+    @Resource
+    private SchoolMapper schoolMapper;
 
     // 开启区赛
     @Override
@@ -59,6 +61,9 @@ public class HostServiceImpl implements HostService {
         String value = stringRedisTemplate.opsForValue().get(key);
         if (value != null)
             throw new StartCompetitionException(ErrorMessageConstant.COMPETITION_HAS_BEGUN);
+
+        // 重置学校选手数量
+        schoolMapper.resetNum(group,zone);
 
         // 插入成绩信息
         insertScoreInfo(group, zone);
@@ -80,11 +85,11 @@ public class HostServiceImpl implements HostService {
         String value = stringRedisTemplate.opsForValue().get(key);
         // 比赛未开启
         if (value == null)
-            throw new ProcessStatusError(ErrorMessageConstant.COMPETITION_HAS__NOT_BEGUN);
+            throw new ProcessStatusException(ErrorMessageConstant.COMPETITION_HAS__NOT_BEGUN);
         String[] now = value.split(":");
         //进程错误，无法推进下一环节
         if (!now[1].equals(Step.NEXT))
-            throw new ProcessStatusError(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+            throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
 
         // 获得下一环节
         String nextProcess = null, step = null;
@@ -165,16 +170,15 @@ public class HostServiceImpl implements HostService {
     // 按笔试成绩筛选
     @Override
     @Transactional
-    public List<com.lcx.pojo.Entity.SingleScore> scoreFilter(String group, String zone) {
+    public List<SingleScore> scoreFilter(String group, String zone) {
         // 查询成绩单
-        List<com.lcx.pojo.Entity.SingleScore> scores = scoreInfoMapper
-                .getWrittenScoreList(group, zone);
-        // 按笔试成绩降序排序
+        List<SingleScore> scores = scoreInfoMapper.getWrittenScoreList(group, zone);
+        // 笔试成绩降序排序按
         scores.sort(Comparator.comparingInt(com.lcx.pojo.Entity.SingleScore::getScore).reversed());
 
         // 添加到written_score表
         for (int i = 0; i < scores.size(); i++) {
-            com.lcx.pojo.Entity.SingleScore singleScore = scores.get(i);
+            SingleScore singleScore = scores.get(i);
             singleScore.setRanking(i + 1);
             writtenScoreMapper.insert(singleScore);
         }
@@ -222,12 +226,21 @@ public class HostServiceImpl implements HostService {
         // 降序排序
         scoreInfoList.sort(Comparator.comparingDouble(GrageVO::getFinalScore).reversed());
 
+        // 区赛为true
+        // 国赛为false
+        boolean flag = !Objects.equals(zone, Zone.N);
+
         // 将group,zone转换为中文
         group = ConvertUtil.parseGroupStr(group);
         zone = ConvertUtil.parseZoneStr(zone);
 
-        InputStream in = this.getClass().getClassLoader()
-                .getResourceAsStream("templates/高校编程能力大赛成绩导出模板.pdf");
+        InputStream in;
+        if(flag){
+            in= this.getClass().getClassLoader().getResourceAsStream("templates/高校编程能力大赛区赛成绩导出模板.pdf");
+        }else{
+            in = this.getClass().getClassLoader().getResourceAsStream("templates/高校编程能力大赛国赛成绩导出模板.pdf");
+        }
+
         try {
             assert in != null;
             PdfReader reader = new PdfReader(in);
@@ -248,23 +261,26 @@ public class HostServiceImpl implements HostService {
             // 插入数据
             int i = 1;
             String key = "fill_";
-            for (GrageVO score : scoreInfoList) {
-                form.setField(key + i, score.getName());
-                i++;
-                form.setField(key + i, group);
-                i++;
-                form.setField(key + i, zone);
-                i++;
-                form.setField(key + i, score.getSeatNum());
-                i++;
-                form.setField(key + i, String.valueOf(score.getWrittenScore()));
-                i++;
-                form.setField(key + i, String.valueOf(score.getPracticalScore()));
-                i++;
-                form.setField(key + i, String.valueOf(score.getQAndAScore()));
-                i++;
-                form.setField(key + i, String.valueOf(score.getFinalScore()));
-                i++;
+            if(flag){
+                for (GrageVO score : scoreInfoList) {
+                    form.setField(key + i, score.getName());i++;
+                    form.setField(key + i, group);i++;
+                    form.setField(key + i, zone);i++;
+                    form.setField(key + i, score.getSeatNum());i++;
+                    form.setField(key + i, String.valueOf(score.getWrittenScore()));i++;
+                    form.setField(key + i, String.valueOf(score.getPracticalScore()));i++;
+                    form.setField(key + i, String.valueOf(score.getQAndAScore()));i++;
+                    form.setField(key + i, String.valueOf(score.getFinalScore()));i++;
+                }
+            }else{
+                for (GrageVO score : scoreInfoList) {
+                    form.setField(key + i, score.getName());i++;
+                    form.setField(key + i, group);i++;
+                    form.setField(key + i, zone);i++;
+                    form.setField(key + i, String.valueOf(score.getPracticalScore()));i++;
+                    form.setField(key + i, String.valueOf(score.getQAndAScore()));i++;
+                    form.setField(key + i, String.valueOf(score.getFinalScore()));i++;
+                }
             }
 
             // 如果为false那么生成的PDF文件还能编辑

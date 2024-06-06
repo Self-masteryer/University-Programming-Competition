@@ -4,10 +4,7 @@ import com.lcx.pojo.DAO.SignInfoDAO;
 import com.lcx.pojo.Entity.Contestant;
 import com.lcx.pojo.Entity.Student;
 import com.lcx.pojo.VO.GrageVO;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -39,4 +36,19 @@ public interface ContestantMapper {
     List<GrageVO> getScoreVoListByGroupAndZone(String group, String zone);
 
     void deleteByUidAndZone(Integer uid, String zone);
+
+    @Select("select * from contestant where uid=#{uid}")
+    Contestant getByUid(int uid);
+
+    @Select("select school from contestant where uid=#{uid}")
+    String getSchoolByUid(int uid);
+
+    @Update("update contestant set zone = 'N' ")
+    void setToNational();
+
+    @Select("select uid from contestant")
+    List<Integer> getUidList();
+
+    @Delete("delete from contestant where `group`=#{group} and zone=#{zone}")
+    void deleteByGroupAndZone(String group, String zone);
 }

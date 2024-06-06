@@ -17,4 +17,10 @@
         order by final_score desc
     </select>
 
+    <select id="getContestant" resultType="com.lcx.pojo.Entity.Contestant">
+        select p.uid,u.name,p.school,u.id_card,p.`group`,p.zone from pre_score p,user_info u
+        where p.uid=u.uid and p.session=#{session} and p.`group`=#{group}
+                and p.zone=#{zone} and p.ranking=#{ranking}
+    </select>
+
 </mapper>

@@ -18,4 +18,7 @@ public interface SchoolMapper {
 
     @Update("update school set num=#{num} where id=#{id}")
     void updateNum(int id, int num);
+
+    @Update("update school set num=0 where `group`=#{group} and zone=#{zone}")
+    void resetNum(String group, String zone);
 }

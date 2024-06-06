@@ -3,7 +3,7 @@ package com.lcx.rabbitMQ.consumer;
 import com.lcx.common.constant.RabbitMQ;
 import com.lcx.common.constant.Supervise;
 import com.lcx.common.util.RedisUtil;
-import com.lcx.handler.SuperviseWebSocketHandler;
+import com.lcx.handler.SuperviseStatusWebSocketHandler;
 import jakarta.annotation.Resource;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,7 +17,7 @@ import java.util.Objects;
 public class StatusInfoQueueReceiver {
 
     @Resource
-    private SuperviseWebSocketHandler superviseWebSocketHandler;
+    private SuperviseStatusWebSocketHandler superviseStatusWebSocketHandler;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
@@ -26,7 +26,7 @@ public class StatusInfoQueueReceiver {
         String value= stringRedisTemplate.opsForValue().get(RedisUtil.getSuperviseKey(Supervise.STATUS));
         // superviseStatusWebSocket开启才发送信息，否则丢弃
         if(Objects.equals(value, Supervise.SUPERVISE_OPEN))
-            superviseWebSocketHandler.sendStatusInfo(StatusInfoJson);
+            superviseStatusWebSocketHandler.sendStatusInfo(StatusInfoJson);
     }
 
 }

@@ -5,11 +5,11 @@ import com.lcx.common.constant.Supervise;
 
 public class RedisUtil {
 
-
     public static final String RATE_TIMES = "rate_times";
     public static final String RATE_NUMS = "rate_nums";
     public static final String COMPETITION = "competition";
     public static final String FINISH_COMPETITION_NUM = "finish_competition_num";
+    public static final String SESSION = "session";
 
     public static String getProcessKey(String group, String zone) {
         return "process" + ":" + group + ":" + zone;
@@ -41,5 +41,9 @@ public class RedisUtil {
 
     public static String getSuperviseKey(String event){
         return Supervise.SUPERVISE + ":" + event;
+    }
+
+    public static String getNextNatContestantKey(String group, String zone) {
+        return "next_national_contestant" + ":" + group + ":" + zone;
     }
 }
