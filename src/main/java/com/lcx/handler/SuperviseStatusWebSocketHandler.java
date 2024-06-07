@@ -47,6 +47,7 @@ public class SuperviseStatusWebSocketHandler extends TextWebSocketHandler {
         log.error("SuperviseStatusWebSocket 传输错误: {}", session.getId(), exception);
     }
 
+    // 发送用户状态信息
     public void sendStatusInfo(String statusInfo)  {
         try {
             session.sendMessage(new TextMessage(statusInfo));

@@ -40,9 +40,9 @@ public class CheckQueryProcessAspect {
         int flag;// 标记
         if (process.equals(Process.WRITTEN)) {
             // 检验是否为区赛,不为区赛则抛异常
-            String competition = stringRedisTemplate.opsForValue().get("competition");
+            String competition = stringRedisTemplate.opsForValue().get(RedisUtil.COMPETITION);
             if (competition == null || competition.equals(Process.NATIONAL))
-                throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+                throw new ProcessStatusException(ErrorMessage.PROCESS_STATUS_ERROR);
 
             if (item.equals(Item.SCORE)) flag = 3;
             else flag = 1;
@@ -54,7 +54,7 @@ public class CheckQueryProcessAspect {
         // <flag时查询到，表示未到能查询的流程
         for (int i = 0; i < flag; i++)
             if (value.equals(processStep[i]))
-                throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+                throw new ProcessStatusException(ErrorMessage.PROCESS_STATUS_ERROR);
 
     }
 

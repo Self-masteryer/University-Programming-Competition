@@ -27,7 +27,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/user/login","/actuator/prometheus");
     }
 
-    //拓展spring mvc框架的消息转换器
+    // 拓展spring mvc框架的消息转换器
     @Override
     protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         //创建一个消息转换器对象

@@ -14,6 +14,7 @@ import com.lcx.pojo.Entity.*;
 import com.lcx.pojo.VO.*;
 import com.lcx.pojo.VO.FinalSingleScore;
 import com.lcx.service.HostService;
+import com.lcx.taskSchedule.AutoBackupsService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +23,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +46,8 @@ public class HostServiceImpl implements HostService {
     private WrittenScoreMapper writtenScoreMapper;
     @Resource
     private SchoolMapper schoolMapper;
+    @Resource
+    private AutoBackupsService autoBackupsService;
 
     // 开启区赛
     @Override
@@ -51,16 +55,16 @@ public class HostServiceImpl implements HostService {
     public void startCompetition(String group, String zone) {
         // 判断报名是否已结束
         String instantStr = stringRedisTemplate.opsForValue().get(Time.SIGN_UP_END_TIME);
-        if (instantStr == null) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
+        if (instantStr == null) throw new StartCompetitionException(ErrorMessage.START_TIME_ERROR);
         long end = Long.parseLong(instantStr);
         long now = System.currentTimeMillis();
-        if (now < end) throw new StartCompetitionException(ErrorMessageConstant.START_TIME_ERROR);
+        if (now < end) throw new StartCompetitionException(ErrorMessage.START_TIME_ERROR);
 
         // 判断比赛是否已经进行
         String key = RedisUtil.getProcessKey(group, zone);
         String value = stringRedisTemplate.opsForValue().get(key);
         if (value != null)
-            throw new StartCompetitionException(ErrorMessageConstant.COMPETITION_HAS_BEGUN);
+            throw new StartCompetitionException(ErrorMessage.COMPETITION_HAS_BEGUN);
 
         // 重置学校选手数量
         schoolMapper.resetNum(group,zone);
@@ -85,11 +89,11 @@ public class HostServiceImpl implements HostService {
         String value = stringRedisTemplate.opsForValue().get(key);
         // 比赛未开启
         if (value == null)
-            throw new ProcessStatusException(ErrorMessageConstant.COMPETITION_HAS__NOT_BEGUN);
+            throw new ProcessStatusException(ErrorMessage.COMPETITION_HAS__NOT_BEGUN);
         String[] now = value.split(":");
         //进程错误，无法推进下一环节
         if (!now[1].equals(Step.NEXT))
-            throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+            throw new ProcessStatusException(ErrorMessage.PROCESS_STATUS_ERROR);
 
         // 获得下一环节
         String nextProcess = null, step = null;
@@ -110,6 +114,13 @@ public class HostServiceImpl implements HostService {
         // 推进至下一环节
         String process = RedisUtil.getProcessValue(nextProcess, step);
         stringRedisTemplate.opsForValue().set(key, process);
+
+        if(Objects.equals(step, Step.RATE)){
+            // 关闭每天00：00自动备份数据库
+            autoBackupsService.StopAutoBackups();
+            // 每一小时备份一次
+            autoBackupsService.StartAutoBackups("0 0 0/1 * * ?");
+        }
 
         return nextProcess;
     }
@@ -173,7 +184,7 @@ public class HostServiceImpl implements HostService {
     public List<SingleScore> scoreFilter(String group, String zone) {
         // 查询成绩单
         List<SingleScore> scores = scoreInfoMapper.getWrittenScoreList(group, zone);
-        // 笔试成绩降序排序按
+        // 按笔试成绩降序排序
         scores.sort(Comparator.comparingInt(com.lcx.pojo.Entity.SingleScore::getScore).reversed());
 
         // 添加到written_score表

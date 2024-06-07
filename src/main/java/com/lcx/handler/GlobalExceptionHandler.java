@@ -1,6 +1,6 @@
 package com.lcx.handler;
 
-import com.lcx.common.constant.ErrorMessageConstant;
+import com.lcx.common.constant.ErrorMessage;
 import com.lcx.common.exception.BaseException;
 import com.lcx.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
         String msg = ex.getMessage();
         if (msg.contains("Duplicate entry")) {
             String[] s = msg.split(" ");
-            msg = s[2] + ErrorMessageConstant.ALREADY_EXISTS;
+            msg = s[2] + ErrorMessage.ALREADY_EXISTS;
             return Result.error(msg);
         } else {
             return Result.error(StringUtils.hasLength(msg) ? msg : "操作失败");

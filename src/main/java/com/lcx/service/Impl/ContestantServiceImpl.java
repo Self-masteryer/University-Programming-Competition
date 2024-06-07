@@ -1,7 +1,7 @@
 package com.lcx.service.Impl;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.lcx.common.constant.ErrorMessageConstant;
+import com.lcx.common.constant.ErrorMessage;
 import com.lcx.common.constant.Time;
 import com.lcx.common.exception.RoleVerificationException;
 import com.lcx.common.exception.time.TimePeriodErrorException;
@@ -53,25 +53,25 @@ public class ContestantServiceImpl implements ContestantService {
         // 校验是否为国赛选手
         Contestant contestant = contestantMapper.getByUid(StpUtil.getLoginIdAsInt());
         if(contestant==null)
-            throw new RoleVerificationException(ErrorMessageConstant.ROLE_VERIFICATION_EXCEPTION);
+            throw new RoleVerificationException(ErrorMessage.ROLE_VERIFICATION_EXCEPTION);
 
         // 校验是否在规定的时间内
         String beginTime = stringRedisTemplate.opsForValue().get(Time.WAIVER_NAT_QUAL_BEGIN_TIME);
         if (beginTime == null)
-            throw new TimePeriodErrorException(ErrorMessageConstant.TIME_ERROR);
+            throw new TimePeriodErrorException(ErrorMessage.TIME_ERROR);
         long begin = Long.parseLong(Objects.requireNonNull(beginTime));
         long end = Long.parseLong(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(Time.WAIVER_NAT_QUAL_END_TIME)));
         long now = System.currentTimeMillis();
         // 报名时间异常
         if (now < begin || now > end)
-            throw new TimePeriodErrorException(ErrorMessageConstant.TIME_ERROR);
+            throw new TimePeriodErrorException(ErrorMessage.TIME_ERROR);
 
         // 删除选手信息
         contestantMapper.deleteByUid(contestant.getUid());
         UserInfo userInfo = UserInfo.builder().uid(contestant.getUid()).group("").zone("").build();
         userInfoMapper.update(userInfo);
 
-        // 从redis中获得国赛选手最后一名
+        // 从redis中获得顺延递补的选手排名
         String key = RedisUtil.getNextNatContestantKey(contestant.getGroup(), contestant.getZone());
         String next = stringRedisTemplate.opsForValue().get(key)
                 ==null?"6":stringRedisTemplate.opsForValue().get(key);

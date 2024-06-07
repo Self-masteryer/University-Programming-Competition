@@ -72,7 +72,7 @@ public class UserWebSocketHandler extends TextWebSocketHandler {
             StatusInfo statusInfo = StatusInfo.builder().id(uid).status("离线").onlineTime(LocalDateTime.now()).build();
             String statusInfoJson = JSON.toJSONString(statusInfo);
 
-            // 向消息队列发送用户在线消息
+            // 向消息队列发送用户离线消息
             rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.STATUS_INFO_ROUTE,statusInfoJson);
         }
 

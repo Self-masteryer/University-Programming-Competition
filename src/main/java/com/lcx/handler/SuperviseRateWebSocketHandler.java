@@ -48,6 +48,7 @@ public class SuperviseRateWebSocketHandler extends TextWebSocketHandler {
         log.error("SuperviseRateWebSocket 传输错误: {}", session.getId(), exception);
     }
 
+    //
     public void sendRateInfo(String rateInfo)  {
         try {
             session.sendMessage(new TextMessage(rateInfo));

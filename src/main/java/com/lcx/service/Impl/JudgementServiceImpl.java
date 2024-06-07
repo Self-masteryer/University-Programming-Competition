@@ -17,6 +17,7 @@ import com.lcx.pojo.MQTO.SingScoreMQTO;
 import com.lcx.pojo.VO.SignGroup;
 import com.lcx.service.JudgementService;
 import com.lcx.service.ScoreService;
+import com.lcx.taskSchedule.AutoBackupsService;
 import jakarta.annotation.Resource;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
@@ -45,13 +46,15 @@ public class JudgementServiceImpl implements JudgementService {
     private UserInfoMapper userInfoMapper;
     @Resource
     private RabbitTemplate rabbitTemplate;
+    @Resource
+    private AutoBackupsService autoBackupsService;
 
     @Override
     @Transactional
     public SignGroup getSignGroup(int signNum) {
         // 查询范围异常
         if (signNum < 1 || signNum > 15)
-            throw new SignNumOutOfBoundException(ErrorMessageConstant.SIGN_NUM_OUT_OF_BOUND);
+            throw new SignNumOutOfBoundException(ErrorMessage.SIGN_NUM_OUT_OF_BOUND);
 
         SaSession session = StpUtil.getSession();
         String key = RedisUtil.getSignGroupsKey(session.getString(Group.GROUP), session.getString(Zone.ZONE));
@@ -65,7 +68,7 @@ public class JudgementServiceImpl implements JudgementService {
     @Transactional
     public Student getContestant(int num) {
         if (num < 1 || num > 30)
-            throw new SignNumOutOfBoundException(ErrorMessageConstant.SIGN_NUM_OUT_OF_BOUND);
+            throw new SignNumOutOfBoundException(ErrorMessage.SIGN_NUM_OUT_OF_BOUND);
 
         // 查询redis，解析json数据，获得选手信息
         SaSession session = StpUtil.getSession();
@@ -83,7 +86,7 @@ public class JudgementServiceImpl implements JudgementService {
         int jid = StpUtil.getLoginIdAsInt();
         // 检验是否重复打分
         int time = practicalScoreMapper.checkTime(uid, jid);
-        if (time != 0) throw new RateException(ErrorMessageConstant.REPEATED_RATE);
+        if (time != 0) throw new RateException(ErrorMessage.REPEATED_RATE);
 
         String group = StpUtil.getSession().getString(Group.GROUP);
         String zone = StpUtil.getSession().getString(Zone.ZONE);
@@ -147,6 +150,11 @@ public class JudgementServiceImpl implements JudgementService {
                     value = RedisUtil.getProcessValue(Process.PRACTICE, Step.NEXT);
                     stringRedisTemplate.opsForValue().set(key, value);
 
+                    // 关闭每一小时备份数据库一次
+                    autoBackupsService.StopAutoBackups();
+                    // 开启每天00：00备份数据库一次
+                    autoBackupsService.StartAutoBackups("0 0 0 * * ? ");
+
                     // 保存signGroups数据
                     key = RedisUtil.getSignGroupsKey(group, zone);
                     String json = stringRedisTemplate.opsForValue().get(key);
@@ -176,7 +184,7 @@ public class JudgementServiceImpl implements JudgementService {
         int jid = StpUtil.getLoginIdAsInt();
         // 检验是否重复打分
         int time = qAndAScoreMapper.checkTime(uid, jid);
-        if (time != 0) throw new RateException(ErrorMessageConstant.REPEATED_RATE);
+        if (time != 0) throw new RateException(ErrorMessage.REPEATED_RATE);
 
         String group = StpUtil.getSession().getString(Group.GROUP);
         String zone = StpUtil.getSession().getString(Zone.ZONE);
@@ -239,6 +247,11 @@ public class JudgementServiceImpl implements JudgementService {
                     key = RedisUtil.getProcessKey(group, zone);
                     value = RedisUtil.getProcessValue(Process.Q_AND_A, Step.NEXT);
                     stringRedisTemplate.opsForValue().set(key, value);
+
+                    // 关闭每一小时备份数据库一次
+                    autoBackupsService.StopAutoBackups();
+                    // 开启每天00：00备份数据库一次
+                    autoBackupsService.StartAutoBackups("0 0 0 * * ? ");
 
                     // 删除signs
                     key = RedisUtil.getSignsKey(group, zone);

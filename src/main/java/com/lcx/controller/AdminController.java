@@ -49,8 +49,8 @@ public class AdminController {
     @PostMapping("/setSignUpTime")
     public Result setSignUpTime(@RequestBody TimePeriod timePeriod) {
         adminService.setSignUpTime(timePeriod);
-        // 启动数据库自动备份
-        autoBackupsService.StartAutoBackups();
+        // 启动数据库自动备份 每天00：00：00
+        autoBackupsService.StartAutoBackups("0 0 0 * * ? ");
         log.info("设置报名时间:{}~{}", timePeriod.getBegin(), timePeriod.getEnd());
         return Result.success("报名时间设置成功");
     }

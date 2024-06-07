@@ -46,11 +46,11 @@ public class UserServiceImpl implements UserService {
         // 通过用户名查询账号
         User user = userMapper.getByUsername(userLoginDTO.getUsername());
         // 账号不存在或账号未启用
-        if (user == null) throw new AccountException(ErrorMessageConstant.ACCOUNT_NOT_FIND);
-        else if (user.getEnabled() == 0) throw new AccountException(ErrorMessageConstant.ACCOUNT_NOT_ENABLED);
-        //校验密码
+        if (user == null) throw new AccountException(ErrorMessage.ACCOUNT_NOT_FIND);
+        else if (user.getEnabled() == 0) throw new AccountException(ErrorMessage.ACCOUNT_NOT_ENABLED);
+        // 校验密码
         if (!BCrypt.checkpw(userLoginDTO.getPassword(), user.getPassword()))
-            throw new PasswordException(ErrorMessageConstant.PASSWORD_ERROR);
+            throw new PasswordException(ErrorMessage.PASSWORD_ERROR);
 
         // 登录
         StpUtil.login(user.getId());
@@ -74,19 +74,19 @@ public class UserServiceImpl implements UserService {
     public SignUpVO signUp(SignUpDTO signUpDTO) {
         String beginTime = stringRedisTemplate.opsForValue().get(Time.SIGN_UP_BEGIN_TIME);
         if (beginTime == null)
-            throw new TimePeriodErrorException(ErrorMessageConstant.SIGN_UP_TIME_ERROR);
+            throw new TimePeriodErrorException(ErrorMessage.SIGN_UP_TIME_ERROR);
         long begin = Long.parseLong(Objects.requireNonNull(beginTime));
         long end = Long.parseLong(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(Time.SIGN_UP_END_TIME)));
         long now = System.currentTimeMillis();
         // 报名时间异常
         if (now < begin || now > end)
-            throw new TimePeriodErrorException(ErrorMessageConstant.SIGN_UP_TIME_ERROR);
+            throw new TimePeriodErrorException(ErrorMessage.SIGN_UP_TIME_ERROR);
 
         // 判断选手数量是否已满
         int uId = StpUtil.getLoginIdAsInt();
         School school = schoolMapper.getByUId(uId);
         if (school.getNum() == 3)
-            throw new ContestantNumIsFullException(ErrorMessageConstant.CONTESTANT_NUM_IS_FULL);
+            throw new ContestantNumIsFullException(ErrorMessage.CONTESTANT_NUM_IS_FULL);
 
         // 未满额，判断选手账号是否存在
         UserInfo userInfo = userInfoMapper.getByIDCard(signUpDTO.getIdCard());
@@ -150,16 +150,16 @@ public class UserServiceImpl implements UserService {
         // 检查能否修改用户名
         User user = userMapper.getById(StpUtil.getLoginIdAsInt());
         if (user.getUsernameModifiable() == 0)
-            throw new UsernameModifiableException(ErrorMessageConstant.USERNAME_HAS_BEEN_MODIFIED_ONCE);
+            throw new UsernameModifiableException(ErrorMessage.USERNAME_HAS_BEEN_MODIFIED_ONCE);
 
         user = userMapper.getByUsername(username);
         // 检查用户名是否已存在
         if (user != null)
-            throw new UsernameExistsException(ErrorMessageConstant.USERNAME_ALREADY_EXISTS);
+            throw new UsernameExistsException(ErrorMessage.USERNAME_ALREADY_EXISTS);
 
         // 检查两次密码是否一致
         if (!confirmPassword.equals(password))
-            throw new PasswordException(ErrorMessageConstant.PASSWORD_INCONSISTENCY);
+            throw new PasswordException(ErrorMessage.PASSWORD_INCONSISTENCY);
 
         user = User.builder().id(StpUtil.getLoginIdAsInt()).username(username)
                 .password(BCrypt.hashpw(password, BCrypt.gensalt())).usernameModifiable(0).build();
@@ -175,13 +175,13 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.getById(StpUtil.getLoginIdAsInt());
         String candidatedPassword = changePwdDTO.getOldPassword();
         if (!BCrypt.checkpw(candidatedPassword, user.getPassword()))
-            throw new PasswordException(ErrorMessageConstant.PASSWORD_ERROR);
+            throw new PasswordException(ErrorMessage.PASSWORD_ERROR);
 
         // 检验新密码是否一致
         String newPassword = changePwdDTO.getNewPassword();
         String confirmPassword = changePwdDTO.getConfirmPassword();
         if (!confirmPassword.equals(newPassword))
-            throw new PasswordException(ErrorMessageConstant.PASSWORD_INCONSISTENCY);
+            throw new PasswordException(ErrorMessage.PASSWORD_INCONSISTENCY);
 
         String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
         userMapper.updatePwdById(StpUtil.getLoginIdAsInt(), hashedPassword);

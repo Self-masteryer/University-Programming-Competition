@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/judgement")
 @SaCheckRole(value = "judgement")
 @Slf4j
-public class judgementController {
+public class JudgementController {
 
     @Resource
     private JudgementService judgementService;

@@ -3,6 +3,8 @@ package com.lcx.service.Impl;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import com.lcx.common.exception.BaseException;
+import com.lcx.common.exception.FileException;
+import com.lcx.common.exception.NetworkException;
 import com.lcx.mapper.SystemMysqlBackupsMapper;
 import com.lcx.pojo.Entity.SystemMysqlBackups;
 import com.lcx.service.SystemMysqlBackupsService;
@@ -42,13 +44,13 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
         final String ip = url.substring(13, 22);
         // 获取端口号
         final String port = url.substring(23, 27);
-        // 数据库文件名称
+        // 获得数据库文件名称
         StringBuilder mysqlFileName = new StringBuilder()
                 .append(databaseName)
                 .append("_")
                 .append(DateUtil.format(new Date(), "yyyy-MM-dd-HH-mm-ss"))
                 .append(FILE_SUFFIX);
-        // 备份命令
+        // 获得备份命令
         StringBuilder cmd = new StringBuilder()
                 .append("mysqldump ")
                 .append("--no-tablespaces ")
@@ -66,11 +68,8 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
                 .append(" > ")
                 .append(filePath)
                 .append(mysqlFileName);
-        // 判断文件是否保存成功
-        if (!FileUtil.exist(filePath)) {
-            FileUtil.mkdir(filePath);
-            throw new BaseException("备份失败，文件保存异常，请查看文件内容后重新尝试！");
-        }
+        // 判断文件路径是否存在
+        if (!FileUtil.exist(filePath)) FileUtil.mkdir(filePath);
 
         String[] command = new String[]{"cmd", "/c", String.valueOf(cmd)};
 
@@ -94,11 +93,11 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
             if (process.waitFor() == 0) {
                 log.info("Mysql 数据库备份成功,备份文件名：{}", mysqlFileName);
             } else {
-                throw new BaseException("网络异常，数据库备份失败");
+                throw new NetworkException("网络异常，数据库备份失败");
             }
         } catch (Exception e) {
             log.info(e.getMessage());
-            throw new BaseException("网络异常，数据库备份失败");
+            throw new NetworkException("网络异常，数据库备份失败");
         }
         return smb;
     }
@@ -106,11 +105,13 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
     // 恢复数据库
     @Override
     public String rollback(SystemMysqlBackups smb, String userName, String password) {
-        // 备份路径和文件名
+        // 获得备份路径文件名
         StringBuilder realFilePath = new StringBuilder().append(smb.getBackupsPath()).append(smb.getBackupsName());
         if (!FileUtil.exist(String.valueOf(realFilePath))) {
-            throw new BaseException("文件不存在，恢复失败，请查看目录内文件是否存在后重新尝试！");
+            throw new FileException("文件不存在，恢复失败，请查看目录内文件是否存在后重新尝试！");
         }
+
+        // 获得恢复命令
         StringBuilder cmd = new StringBuilder()
                 .append("mysql -h")
                 .append(smb.getMysqlIp())
@@ -136,10 +137,10 @@ public class SystemMysqlBackupsServiceImpl implements SystemMysqlBackupsService 
         try {
             process = Runtime.getRuntime().exec(command);
             if (process.waitFor() == 0) log.info("Mysql 数据库恢复成功,恢复文件名：{}", realFilePath);
-             else throw new BaseException("网络异常，恢复失败，请稍后重新尝试！");
+             else throw new NetworkException("网络异常，恢复失败，请稍后重新尝试！");
         } catch (Exception e) {
             log.info(e.getMessage());
-            throw new BaseException("网络异常，恢复失败，请稍后重新尝试！");
+            throw new NetworkException("网络异常，恢复失败，请稍后重新尝试！");
         }
 
         systemMysqlBackupsMapper.update(smb);

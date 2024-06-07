@@ -62,6 +62,7 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
+    // 查询往届成绩
     @Override
     public PageResult queryPreScore(PreScorePageQuery preScorePageQuery) {
         PageHelper.startPage(preScorePageQuery.getPageNo(), preScorePageQuery.getPageSize());
@@ -69,6 +70,7 @@ public class ScoreServiceImpl implements ScoreService {
         return new PageResult(page.getTotal(), page.getResult());
     }
 
+    // 查询个人往届成绩
     @Override
     public List<PreScoreVO> queryMyPreScore() {
         return preScoreMapper.getListByUid(StpUtil.getLoginIdAsInt());
@@ -87,6 +89,7 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
+    // 查询学生成绩
     @Override
     @Transactional
     public PageResult pageQueryStudentScore(StudentScorePageQuery studentScorePageQuery) {
@@ -95,12 +98,14 @@ public class ScoreServiceImpl implements ScoreService {
         return new PageResult(page.getTotal(), page.getResult());
     }
 
+    // 删除笔试成绩
     @Override
     @Transactional
     public void deleteWrittenScore(String group, String zone) {
         writtenScoreMapper.deleteByGroupAndZone(group, zone);
     }
 
+    // 添加学生成绩
     @Override
     @Transactional
     public void addStudentScore(String group, String zone) {
@@ -125,6 +130,7 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
+    // 删除成绩单
     @Override
     @Transactional
     public void deleteScore(String group, String zone) {
@@ -136,6 +142,7 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
+    // 查询笔试成绩
     @Override
     @Transactional
     public SingleScoreVO getWrittenScore(int uid) {

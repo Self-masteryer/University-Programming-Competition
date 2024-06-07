@@ -311,6 +311,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+    // 查询比赛进程
     @Override
     public List<ProcessVO> queryProcess(String group, String zone) {
         List<ProcessVO> processVOList = new ArrayList<>();

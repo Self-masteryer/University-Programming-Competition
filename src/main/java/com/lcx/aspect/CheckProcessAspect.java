@@ -7,8 +7,8 @@ import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.util.RedisUtil;
-import com.lcx.mapper.UserInfoMapper;
 import com.lcx.pojo.DTO.CompInfoDTO;
+import com.lcx.taskSchedule.AutoBackupsService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -30,7 +30,7 @@ public class CheckProcessAspect {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
-    private UserInfoMapper userInfoMapper;
+    private AutoBackupsService autoBackupsService;
     private String group;
     private String zone;
     private String key;
@@ -78,6 +78,13 @@ public class CheckProcessAspect {
         //更新进程信息
         stringRedisTemplate.opsForValue().set(key, value);
         log.info("{}:{}已进入{}环节",group,zone,value);
+
+        if(value.split(":")[1].equals(Step.RATE)){
+            // 关闭每天00：00自动备份数据库
+            autoBackupsService.StopAutoBackups();
+            // 每一小时备份一次
+            autoBackupsService.StartAutoBackups("0 0 0/1 * * ?");
+        }
     }
 
     private void checkProcess(String process, String step) {
@@ -87,6 +94,6 @@ public class CheckProcessAspect {
 
         String candidatedValue=RedisUtil.getProcessValue(process,step);
         if(!Objects.equals(candidatedValue,value))
-            throw new ProcessStatusException(ErrorMessageConstant.PROCESS_STATUS_ERROR);
+            throw new ProcessStatusException(ErrorMessage.PROCESS_STATUS_ERROR);
     }
 }

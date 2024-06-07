@@ -24,11 +24,11 @@ public class AutoBackupsService {
     private ScheduledFuture<?> AutoBackupsScheduledFuture;
 
     // 启动自动备份
-    public void StartAutoBackups() {
+    public void StartAutoBackups(String cronExpression) {
         AutoBackupsScheduledFuture = taskScheduler.schedule(()-> systemMysqlBackupsService.mysqlBackups(mysqlProperties.getPath(),
                 mysqlProperties.getUrl(), mysqlProperties.getUsername(),
-                mysqlProperties.getPassword(), mysqlProperties.getDatabase()),new CronTrigger("0 0 0 * * ? "));// 每天00：00：00
-        log.info("自动备份已开启");
+                mysqlProperties.getPassword(), mysqlProperties.getDatabase()),new CronTrigger(cronExpression));
+        log.info("自动备份已开启:{}", cronExpression);
     }
 
     // 关闭自动备份

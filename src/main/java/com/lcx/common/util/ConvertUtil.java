@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 
 public class ConvertUtil {
 
+    // 角色中文---->角色数字
     public static int parseRoleNum(String role) {
         return switch (role) {
             case Role.A -> 1;
@@ -23,6 +24,7 @@ public class ConvertUtil {
         };
     }
 
+    // 角色数字---->角色中文
     public static String parseRoleStr(int rid) {
         return switch (rid) {
             case 1 -> Role.A;
@@ -35,6 +37,7 @@ public class ConvertUtil {
         };
     }
 
+    // 角色数字字符---->角色中文
     public static String parseRoleStr(String rid) {
         return switch (rid) {
             case "1" -> Role.A;
@@ -47,6 +50,7 @@ public class ConvertUtil {
         };
     }
 
+    // 地区中文---->地区缩写英语单词
     public static String parseZoneSimStr(String zone) {
         return switch (zone) {
             case Zone.NORTH_WEST -> "NW";
@@ -60,6 +64,7 @@ public class ConvertUtil {
         };
     }
 
+    // 地区缩写英语单词---->地区中文
     public static String parseZoneStr(String zone) {
         return switch (zone) {
             case Zone.NW -> Zone.NORTH_WEST;
@@ -73,6 +78,7 @@ public class ConvertUtil {
         };
     }
 
+    // 组别中文---->组别缩写英语单词
     public static String parseGroupSimStr(String group) {
         return switch (group) {
             case Group.BK -> "BK";
@@ -81,6 +87,7 @@ public class ConvertUtil {
         };
     }
 
+    // 组别缩写英语单词---->组别中文
     public static String parseGroupStr(String group) {
         return switch (group) {
             case "BK" -> Group.BK;
@@ -89,6 +96,7 @@ public class ConvertUtil {
         };
     }
 
+    // 进程英语---->进程中文
     public static String parseProcessStr(String process) {
         return switch (process) {
             case Process.WRITTEN -> Process.W;
@@ -99,6 +107,7 @@ public class ConvertUtil {
         };
     }
 
+    // 步骤英语---->步骤中文
     public static String parseStepStr(String step) {
         return switch (step) {
             case Step.SEAT_DRAW -> Step.SD;
@@ -112,6 +121,7 @@ public class ConvertUtil {
         };
     }
 
+    // 字符串时间戳---->LocalDateTime
     public static LocalDateTime parseDateTime(String instantStr) {
         // 将字符串转换为长整型
         long instantLong = Long.parseLong(instantStr);
@@ -123,11 +133,13 @@ public class ConvertUtil {
         return zonedDateTime.toLocalDateTime();
     }
 
+    // LocalDateTime---->字符串时间戳
     public static String parseDateTimeStr(LocalDateTime localDateTime) {
         // 转换为ZonedDateTime
         ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.systemDefault());
         return String.valueOf(zonedDateTime.toInstant().toEpochMilli());
     }
+
 
     public static String parseStatusStr(String status) {
         return switch (status){

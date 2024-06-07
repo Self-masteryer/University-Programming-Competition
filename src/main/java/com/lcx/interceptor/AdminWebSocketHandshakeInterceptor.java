@@ -2,7 +2,7 @@ package com.lcx.interceptor;
 
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
-import com.lcx.common.constant.ErrorMessageConstant;
+import com.lcx.common.constant.ErrorMessage;
 import com.lcx.common.constant.Role;
 import com.lcx.common.constant.Supervise;
 import com.lcx.common.exception.RoleVerificationException;
@@ -26,7 +26,7 @@ public class AdminWebSocketHandshakeInterceptor extends HttpSessionHandshakeInte
         // 从请求头中读取token
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (token == null)
-            throw new LoginException(ErrorMessageConstant.NOT_LOGIN);
+            throw new LoginException(ErrorMessage.NOT_LOGIN);
 
         // 解析token，获得id
         int uid = Integer.parseInt((String) StpUtil.getLoginIdByToken(token));
@@ -34,15 +34,15 @@ public class AdminWebSocketHandshakeInterceptor extends HttpSessionHandshakeInte
         // 验证管理员身份
         SaSession saSession = StpUtil.getSessionByLoginId(uid);
         if (saSession.getInt(Role.ROLE) != Role.ADMIN)
-            throw new RoleVerificationException(ErrorMessageConstant.ROLE_VERIFICATION_EXCEPTION);
+            throw new RoleVerificationException(ErrorMessage.ROLE_VERIFICATION_EXCEPTION);
 
         // 获得query参数，判断监听事件
-        URI uri = request.getURI();
-        MultiValueMap<String, String> queryParams = UriComponentsBuilder.fromUri(uri).build().getQueryParams();
+//        URI uri = request.getURI();
+//        MultiValueMap<String, String> queryParams = UriComponentsBuilder.fromUri(uri).build().getQueryParams();
 
         // 添加属性
         attributes.put("uid", uid);
-        attributes.put(Supervise.EVENT, queryParams.getFirst(Supervise.EVENT));
+//        attributes.put(Supervise.EVENT, queryParams.getFirst(Supervise.EVENT));
 
         return super.beforeHandshake(request, response, wsHandler, attributes);
     }
