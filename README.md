@@ -135,7 +135,7 @@
 
 处理进入应用的HTTP请求并返回响应
 
-
+---
 
 ##### AdminController
 
@@ -156,7 +156,7 @@
 
 注意：管理员拥有主持人的**全部权限**。
 
-
+---
 
 ##### HostController
 
@@ -172,7 +172,7 @@
 * 查询每组实战对决分数
 * 查询快问快答得分
 
-
+---
 
 #####  JudgementController
 
@@ -185,7 +185,7 @@
 	* 查询选手
 	* 对选手打分
 
-
+---
 
 ##### SchoolController
 
@@ -194,7 +194,7 @@
 * 为学生报名
 * 查询往届学生获奖情况
 
-
+---
 
 #####  ContestantController
 
@@ -205,7 +205,7 @@
 * 查询组号
 * 放弃国赛资格
 
-
+---
 
 #####  UserController
 
@@ -219,7 +219,7 @@
 * 查询用户信息
 * 修改用户信息
 
-
+---
 
 ##### SystemMysqlBackupsController
 
@@ -241,10 +241,7 @@ MYSQL数据：
 
 ##### AdminService
 
-管理员业务：
-
 1. **下发主持人、评委及学校账号**
-	
 	1. 管理员提交规定格式的excel文件赋予其角色（权限）
 	2. 账号存在，直接赋予其相关角色（权限）。注意：此时“是否重置密码”为必填项
 	3. 账号不存在，则创建账号后下发。
@@ -267,148 +264,149 @@ MYSQL数据：
 6. **监控评委打分情况、选手得分情况**：根据选手名、评委名、组别、赛区分页查询
 7. **设置为游客身份**：根据组别、赛区将账号设置为游客角色（除晋级国赛选手）
 
-
+---
 
 ##### HostService
 
 1. **开启比赛**
 
-	* 首先根据存储在redis中的报名时间，判断报名是否已结束
-	* 再根据redis中是否有本组别赛区进程信息，判断比赛是否已经进行
-	* 将本组别赛区进程信息（written:seat_draw）存储到redis
+   1. 首先根据存储在redis中的报名时间，判断报名是否已结束
+   2. 再根据redis中是否有本组别赛区进程信息，判断比赛是否已经进行
+   3. 将本组别赛区进程信息（written:seat_draw）存储到redis
 
 2. **推进下一环节**
-
-  * 从redis获得本组别赛区进程信息，检验环节步骤是否为next
-  * 获得下一进程存储到redis
-  * 如果step为rate，开启每一小时自动备份数据库
+	1. 从redis获得本组别赛区进程信息，检验环节步骤是否为next
+	2. 获得下一进程存储到redis
+	3. 如果step为rate，开启每一小时自动备份数据库
 
 3. **座位号抽签**
 
-	* 读取组别赛区选手总数
-	* 创建一个1~n的List
-	* 利用Collections.shuffle()打乱List
-	* 按顺序给选手分配座位号
+   1. 读取组别赛区选手总数
+   2. 创建一个1~n的List
+   3. 利用Collections.shuffle()打乱List
+   4. 按顺序给选手分配座位号
 
 4. **通过excel上传笔试成绩**：直接按格式读取成绩数据，存储到mysql
 
 5. **按笔试成绩筛选**
 
-  1. 查询成绩单后按笔试成绩降序排序
-  2. 将笔试成绩存储到mysql
-  3. 从contestant表中删除淘汰选手
-  4. 从score_info表中删除淘汰选手的成绩单
+	1. 查询成绩单后按笔试成绩降序排序
+	2. 将笔试成绩存储到mysql
+	3. 从contestant表中删除淘汰选手
+	4. 从score_info表中删除淘汰选手的成绩单
 
 6. **分组抽签**
 
-	1. 首先创建一个映射来跟踪每个学校的选手
+   1. 首先创建一个映射来跟踪每个学校的选手
+   2. 此时还有一个List<Student> students存储未分组的学生
+   3. 循环直到students列表的大小等于6
+   4. 首先从students取出学生A，再查询schoolStudents与之不同的学校，从中取出学生B组成一组
+   5. 剩下6名选手随机分组可能发生同校同组的情况，需要回退
+   6. 按之前的逻辑进出循环，当剩下两名选手来自同一学校时，回退两步
+   7. 考虑到后面评委要频繁查询分组名单，所以将分组信息存进redis
+   8. 更新成绩单分组信息
 
-	2. 此时还有一个List<Student> students存储未分组的学生
-	3. 循环直到students列表的大小等于6
-	4. 首先从students取出学生A，再查询schoolStudents与之不同的学校，从中取出学生B组成一组
-	5. 剩下6名选手随机分组可能发生同校同组的情况，需要回退
-	6. 按之前的逻辑进出循环，当剩下两名选手来自同一学校时，回退两步
-	7. 考虑到后面评委要频繁查询分组名单，所以将分组信息存进redis
-	8. 更新成绩单分组信息
-	
-	附分组抽签算法
-	
-	```java
-	    public List<SignGroup> groupDraw(List<Student> students) {
-	        // 创建一个映射来跟踪每个学校的选手
-	        Map<String, List<Student>> schoolStudents = new HashMap<>();
-	        for (Student student : students) {
-	            schoolStudents.computeIfAbsent(student.getSchool(), k -> new ArrayList<>()).add(student);
-	        }
-	        int signNum = 1;
-	        Collections.shuffle(students);// 打乱选手顺序
-	        List<SignGroup> signGroups = new ArrayList<>();// 存放分组信息
-	        while (students.size() > 6) {
-	            Student A = students.remove(0);
-	            schoolStudents.get(A.getSchool()).remove(A);
-	            for (String school : new ArrayList<>(schoolStudents.keySet())) {
-	                if (!schoolStudents.get(school).isEmpty() && !Objects.equals(school, A.getSchool())) {
-	                    Student B = schoolStudents.get(school).remove(0);
-	                    students.remove(B);
-	                    signGroups.add(new SignGroup(signNum++, A, B));
-	                    break;
-	                }
-	            }
-	        }
-	        // 剩下6名选手随机分组可能发生同校同组的情况，需要回退
-	        Stack<Student> stack = new Stack<>();
-	        while (!students.isEmpty()) {
-	            Student A = students.remove(0);
-	            schoolStudents.get(A.getSchool()).remove(A);
-	            stack.push(A);
-	            boolean flag = true;
-	            for (String school : new ArrayList<>(schoolStudents.keySet())) {
-	                if (!schoolStudents.get(school).isEmpty() && !Objects.equals(school, A.getSchool())) {
-	                    Student B = schoolStudents.get(school).remove(0);
-	                    students.remove(B);
-	                    stack.push(B);
-	                    signGroups.add(new SignGroup(signNum++, A, B));
-	                    flag = false;
-	                    break;
-	                }
-	            }
-	            // 剩下两名选手来自同一学校，回退两步
-	            if (flag) {
-	                students.addAll(stack);
-	                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
-	                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
-	                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
-	                schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
-	                signGroups.remove(signGroups.size() - 1);
-	                signGroups.remove(signGroups.size() - 1);
-	                signNum -= 2;
-	            }
-	        }
-	        return signGroups;
-	    }
-	```
-	
-	
-	
+  
+
+  附分组抽签算法
+
+  ```java
+      public List<SignGroup> groupDraw(List<Student> students) {
+          // 创建一个映射来跟踪每个学校的选手
+          Map<String, List<Student>> schoolStudents = new HashMap<>();
+          for (Student student : students) {
+              schoolStudents.computeIfAbsent(student.getSchool(), k -> new ArrayList<>()).add(student);
+          }
+          int signNum = 1;
+          Collections.shuffle(students);// 打乱选手顺序
+          List<SignGroup> signGroups = new ArrayList<>();// 存放分组信息
+          while (students.size() > 6) {
+              Student A = students.remove(0);
+              schoolStudents.get(A.getSchool()).remove(A);
+              for (String school : new ArrayList<>(schoolStudents.keySet())) {
+                  if (!schoolStudents.get(school).isEmpty() && !Objects.equals(school, A.getSchool())) {
+                      Student B = schoolStudents.get(school).remove(0);
+                      students.remove(B);
+                      signGroups.add(new SignGroup(signNum++, A, B));
+                      break;
+                  }
+              }
+          }
+          // 剩下6名选手随机分组可能发生同校同组的情况，需要回退
+          Stack<Student> stack = new Stack<>();
+          while (!students.isEmpty()) {
+              Student A = students.remove(0);
+              schoolStudents.get(A.getSchool()).remove(A);
+              stack.push(A);
+              boolean flag = true;
+              for (String school : new ArrayList<>(schoolStudents.keySet())) {
+                  if (!schoolStudents.get(school).isEmpty() && !Objects.equals(school, A.getSchool())) {
+                      Student B = schoolStudents.get(school).remove(0);
+                      students.remove(B);
+                      stack.push(B);
+                      signGroups.add(new SignGroup(signNum++, A, B));
+                      flag = false;
+                      break;
+                  }
+              }
+              // 剩下两名选手来自同一学校，回退两步
+              if (flag) {
+                  students.addAll(stack);
+                  schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                  schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                  schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                  schoolStudents.get(stack.peek().getSchool()).add(stack.pop());
+                  signGroups.remove(signGroups.size() - 1);
+                  signGroups.remove(signGroups.size() - 1);
+                  signNum -= 2;
+              }
+          }
+          return signGroups;
+      }
+  ```
+
+  
+
 7. **导出成绩**
 
-  1. 按降序排序最终成绩
-  2. 根据组别区分区赛和国赛，采用不用的成绩导出模板
-  3. 使用iTextPdf为Pdf模板填充表单项
+	1. 按降序排序最终成绩
+	2. 根据组别区分区赛和国赛，采用不用的成绩导出模板
+	3. 使用iTextPdf为Pdf模板填充表单项
 
 8. **查询每组实战对决分数**：根据uid查询
 
 9. **查询快问快答得分**：根据uid查询
 
-
+---
 
 ##### JudgementService
 
 1. **查询分组选手**
-  1. 检验查询范围是否异常
-  2. 从redis中查询分组信息json字符串
-  3. 解析为列表后返回
+      1. 检验查询范围是否异常
+      2. 从redis中查询分组信息json字符串
+      3. 解析为列表后返回
+
 2. **对每组选手打分**
-  1. 检验是否重复打分
-  2. 插入选手得分信息
-  3. 判断管理员是否在监控打分，在则发送评委打分信息
-  4. 将rate_times（几位评委已打分）+1后存储到redis
-  5. 判断五位评委是否打分完毕
-          1. 计算平均分后插入选手成绩单
-             2. 判断管理员是否在监控选手得分，在则发送选手得分信息
-                   3. 删除rate_times
-                       4. 将rate_nums（已打分选手）+1后存储到redis
-                           5. 判断30位选手是否全部打分完毕
-        2. 删除rate_nums
-        3. 推进流程至next
-        4. 关闭每一小时自动没法数据库，开启每天00：00自动备份数据库
-        5. 删除存储在redis中的分组签号信息
-        6. 存储个人签号
-      
+      1. 检验是否重复打分
+      2. 插入选手得分信息
+      3. 判断管理员是否在监控打分，在则发送评委打分信息
+      4. 将rate_times（几位评委已打分）+1后存储到redis
+      5. 判断五位评委是否打分完毕
+           1. 计算平均分后插入选手成绩单
+           2. 判断管理员是否在监控选手得分，在则发送选手得分信息
+           3. 删除rate_times
+           4. 将rate_nums（已打分选手）+1后存储到redis
+           5. 判断30位选手是否全部打分完毕
+                 1. 删除rate_nums
+                 2. 推进流程至next
+                 3. 关闭每一小时自动备份数据库，开启每天00：00自动备份数据库
+                 4. 删除存储在redis中的分组签号信息
+                 5. 存储个人签号
+
 3. **查询选手**：同“查询分组选手”一样的逻辑
 4. **对选手打分**：同“对每组选手打分”的逻辑，**不同点**在于最后一步只删除了“个人签号”
 
-
+---
 
 ##### ContestantService
 
@@ -424,7 +422,7 @@ MYSQL数据：
 
 * **删除未晋级选手**：将排序低于5的选手从contestant表中删除
 
-
+---
 
 ##### UserService
 
@@ -449,7 +447,7 @@ MYSQL数据：
 
 * **修改用户信息**：直接修改
 
-
+---
 
 ##### ScoreService
 
@@ -475,7 +473,7 @@ MYSQL数据：
 * **删除笔试成绩**：按group、zone删除
 * **删除成绩单**：按group、zone删除成绩单、实战对决成绩、快问快打成绩
 
-
+---
 
 ##### StpInterface
 
@@ -484,7 +482,7 @@ sakoken自定义权限加载接口实现类
 1. 返回一个账号所拥有的权限码集合：直接根据uid查询permission表
 2. 返回一个账号所拥有的角色标识集合：直接根据uid查询role表
 
-
+---
 
 ##### SystemMysqlBackupsService
 
@@ -494,11 +492,11 @@ sakoken自定义权限加载接口实现类
 
 * **备份mysql数据库**
 	1. 从url中获得ip、端口号
-	1. 获得数据库文件名称
-	1. 获得备份命令
-	1. 判断文件路径是否存在，不存在就创建
-	1. 备份信息存放到数据库
-	1. 获取Runtime实例，备份数据库
+	2. 获得数据库文件名称
+	3. 获得备份命令
+	4. 判断文件路径是否存在，不存在就创建
+	5. 备份信息存放到数据库
+	6. 获取Runtime实例，备份数据库
 
 * **恢复数据库**
 
@@ -508,11 +506,11 @@ sakoken自定义权限加载接口实现类
 
 	3. 获取Runtime实例，恢复数据库
 
-
+---
 
 #### common
 
-
+---
 
 ##### constant
 
@@ -528,13 +526,13 @@ sakoken自定义权限加载接口实现类
 * Supervise：监控常量
 * Time：时间常量
 
-
+---
 
 ##### exception
 
 各种异常
 
-
+---
 
 ##### json
 
@@ -543,7 +541,7 @@ JacksonObjectMapper对象映射器
 * 基于jackson将Java对象转为json
 * 将json转为Java对象
 
-
+---
 
 ##### properties
 
@@ -551,14 +549,14 @@ JacksonObjectMapper对象映射器
 
 * MysqlProperties：mysql属性
 
-
+---
 
 ##### result
 
 * PageResult：分页查询结果
 * Result：http相应结果
 
-
+---
 
 ##### util
 
@@ -580,7 +578,7 @@ JacksonObjectMapper对象映射器
 * **RandomStringUtils**：获得长度为n包含大小写英文、数字及".$@!%*?&"的随机字符串（特殊字符在末尾一位）
 * **RedisUtil**：获得各种键名
 
-
+---
 
 #### annotation
 
@@ -599,80 +597,78 @@ JacksonObjectMapper对象映射器
   	* process：进程
   	* item：查询项目
 
-
+---
 
 #### aspect
 
-* **AfterCompetitionAspect**：比赛结束后对数据处理，用于导出成绩接口处
-	1. 判断是主持人还是管理员调用导出成绩接口
-	2. 完赛数量加一
-	3. 将成绩存储到学校的学生成绩
-	4. 将成绩存储到往届成绩
-	5. 删除成绩信息
-	6. 判断区赛还是决赛
-	7. 区赛
-		1. 从contestant中删除未晋级选手
-		2. 将选手、笔试阶段淘汰的选手、主持人、评委设置为游客身份
-		3. 删除笔试成绩
-		4. 设置默认放弃国赛资格时间段 
-	
-	8. 国赛
-		1. 从contestant中删除全部选手
-		2. 将选手、主持人和评委设置为游客身份
-		3. 删除本组本赛区redis进程信息
-		4. 国赛结束
-			1. 备份数据
-			2. 关闭数据库自动备份
-			3. 删除redis数据
-	
+---
+
 * **CheckProcessAspect**：
-  
+
   1. Before：检验调用接口时是否符合当前进程
-  
   	1. 获取方法签名
-  
   	2. 获得注解参数（process、step）
-  
-  	3. 判断是管理员还是主持人或评委
+  	3. 判断是管理员还是主持人或评委（判断group、zone来源）
   	4. 设置group、zone
   	5. 匹配redis中的进程
-  
-  		* 匹配：放行
-  
-  		* 不匹配：拦截
-  
-  
+  	    * 匹配：放行
+        * 不匹配：拦截
   2. After：自动跳转到下一step（步骤）
-
-  	1. 判断是否为打分环节，是则return
-  	2. 获得下一步骤
-  	3. 更新进程信息
-  	4. 如果step为rate，开启每一小时自动备份数据库
   
+     1. 判断是否为打分环节，是则return
+     2. 获取下一步
+     3. 更新进程信息
+     4. 如果step为rate，开启每一小时自动备份数据库
+  
+
+---
+
 * **CheckQueryProcessAspect**：检验调用接口时是否符合当前进程
-1. 获取方法签名
-	
-2. 获得注解参数（process、item）
-	
-3. 获得flag标记
-	
-	* 判断进程
-	
-		1. 笔试环节：
-				1. 检验是否为区赛,不为区赛则抛异常
-				2. item等于score---->flag=3
-				3. item等于num---->flag=1
-	
-		2. 实战对决环节：flag=5
-			3. 快问快答环节：flag=7
-	
-4. 获得当前进程
-	
-5. 遍历processStep字符串数组
-	
-	* <flag时查询到，表示未到能查询的进程
+	1. 获取方法签名
+	2. 获得注解参数（process、item）
+	3. 判断进程，获得flag标记
+	   1. 笔试环节：
+          1. 检验是否为区赛,不为区赛则抛异常
+          2. 如果item等于score，flag=3
+          3. 如果item等于num，flag=1
+	   2. 实战对决环节：flag=5
+	   3. 快问快答环节：flag=7
+	4. 获得当前组别赛区进程
+	5. 遍历processStep字符串数组
+		* <flag时查询到，表示未到能查询的进程
 
+---
 
+* AfterCompetitionAspect：比赛结束后对数据处理，用于导出成绩接口处
+
+	1. 判断是主持人还是管理员调用导出成绩接口
+
+	2. 完赛数量加一
+
+	3. 将成绩存储到学校的学生成绩
+
+	4. 将成绩存储到往届成绩
+
+	5. 删除成绩信息
+
+	6. 判断区赛还是国赛
+
+		* 区赛
+			1. 从contestant中删除未晋级选手
+			2. 将选手、笔试阶段淘汰的选手、主持人、评委设置为游客身份
+			3. 删除笔试成绩
+			4. 设置默认放弃国赛资格时间段 
+		
+		* 国赛
+			1. 从contestant中删除全部选手
+			2. 将选手、主持人和评委设置为游客身份
+			3. 删除本组本赛区redis进程信息
+			4. 判断本科组、高职组是否都完赛
+				1. 备份数据
+				2. 关闭数据库自动备份
+				3. 清除redis数据
+
+---
 
 **附processStep字符串数组**
 
@@ -688,7 +684,7 @@ JacksonObjectMapper对象映射器
 9. final:score_export
 10. final:next
 
-
+---
 
 #### config
 
@@ -712,7 +708,7 @@ JacksonObjectMapper对象映射器
 	* 注册superviseStatus端点
 	* 注册superviseRate端点
 
-
+---
 
 #### interceptor
 
@@ -722,40 +718,38 @@ JacksonObjectMapper对象映射器
 * **AdminWebSocketHandshakeInterceptor**
 	* 在UserWebsocketHandshakeInterceptor的基础上添加管理员身份验证
 
-
+---
 
 #### handler
 
-* **GlobalExceptionHandler**：全局异常处理者
+* **GlobalExceptionHandler**：全局异常处理器
 * **UserWebSocketHandler**
+	
 	* **连接建立**
-		1. 更新用户状态为在线
-		
-		2. 判断管理员是否在监视账号状态
-			1. 构建json状态信息
-			2. 向消息队列发送用户在线消息
-		
-		3. 保存webSocketSession
-		
+	  1. 更新用户状态为在线
+	  2. 判断管理员是否在监视账号状态
+	  	1. 构建json状态信息
+	  	2. 向消息队列发送用户在线消息
+	  3. 保存webSocketSession
 	* **关闭连接**
-	1. 更新用户状态为离线
-		
-	2. 判断管理员是否在监视账号状态
-			1. 构建json状态信息
-			2. 向消息队列发送用户离线消息
-		
-	3. 移除webSocketSession
+		1. 更新用户状态为离线
+		2. 判断管理员是否在监视账号状态
+           1.  构建json状态信息
+           2. 向消息队列发送用户离线消息
+		3. 移除webSocketSession
+
 * **SuperviseStatusWebSocketHandler**
+  
   * 连接建立：开启向用户状态消息队列发送状态消息
   * 关闭连接：关闭向用户状态消息队列发送状态消息
   * 发送用户状态信息
-
+  
 * **SuperviseRateWebSocketHandler**
   * 连接建立：开启向评委打分消息队列发送打分消息
   * 关闭连接：关闭向评委打分消息队列发送打分消息
   * 发送评委打分或选手得分信息
 
-
+---
 
 #### rabbitMQ
 
@@ -772,21 +766,21 @@ JacksonObjectMapper对象映射器
 	
 * **provider**
 
-
+---
 
 #### taskSchedule
 
 * **AutoBackupsService**
-	* 启动自动备份
+	* 启动自动备份（通过传cron表达式设置定时任务）
 	* 关闭自动备份
 * **DeleteExpireData**
 	* 每天00：00：00删除过期数据
 
-
+---
 
 ## 二、 使用的技术栈
 
-
+---
 
 * **Spring Boot**
 
@@ -797,7 +791,7 @@ JacksonObjectMapper对象映射器
 		- **自动配置**：根据引入的依赖自动配置Spring组件，减少手动配置。
 		- **Starter POMs**：简化依赖管理，一键导入所需功能模块。
 
-	
+	---
 
 * **MySQL**
 
@@ -807,7 +801,7 @@ JacksonObjectMapper对象映射器
 		* 利用事务处理保证数据完整性。
 		* 备份与恢复机制确保数据安全。
 
-	
+	---
 
 * **Redis**
 	* **简介**：一款开源的、基于键值对的数据结构存储系统，同时也可用作数据库、缓存和消息代理。
@@ -816,7 +810,7 @@ JacksonObjectMapper对象映射器
 		* 高速内存存储降低延迟。
 		* 丰富的数据结构满足多样需求。
 
-
+---
 
 * **SaToken**
 
@@ -826,7 +820,7 @@ JacksonObjectMapper对象映射器
 		* 无状态认证设计减轻服务器负担。
 		* 易于集成，快速接入。
 
-	
+	---
 
 * **Websocket**
 
@@ -838,7 +832,7 @@ JacksonObjectMapper对象映射器
 		- **持久连接**：一次握手后保持连接，减少通信开销。
 		- **广泛支持**：现代浏览器和后端框架普遍支持WebSocket。
 
-	
+	---
 
 * **RabbitMQ**
 
@@ -853,24 +847,23 @@ JacksonObjectMapper对象映射器
 		- **消息确认机制**：确保消息被正确处理。
 		- **管理界面**：提供直观的Web管理界面，便于监控和管理队列。
 
-	
+	---
 
 * **Prometheus**
 
 	* **简介**： 一款开源的监控和警报系统。它专为云原生环境设计，擅长收集、聚合、存储和展示时间序列数据，特别适合用于监控微服务架构、容器化应用以及大型分布式系统。
 	* **在项目中的角色**：
-		- **数据采集**：通过Prometheus Server主动拉取或Exporter被动推送的方式，从各类目标（如应用、数据库、硬件等）收集性能指标。
+		- **数据采集**：通过Prometheus Server主动拉取或Exporter被动推送的方式，从各类目标（应用、硬件）收集性能指标。
 		- **存储管理**：将收集到的数据存储在本地的时序数据库中，支持高效查询和长期存储。
-		- **告警生成**：根据预定义的规则评估指标数据，触发告警通知，及时发现并响应系统异常。
-		- **数据可视化**：虽然Prometheus本身提供表达式浏览器查询数据，但通常与Grafana等可视化工具集成，以实现更丰富的数据展示。
+		- **告警生成**：根据预定义的规则评估指标数据，触发告警通知，及时发现并响应系统异常。（本系统未实现）
 	* **技术亮点**：
-		- **灵活地查询语言**：PromQL，一种强大且灵活的查询语言，便于进行复杂的数据筛选和聚合分析。
+		- **灵活的查询语言**：PromQL，一种强大且灵活的查询语言，便于进行复杂的数据筛选和聚合分析。
 		- **多维度数据模型**：支持标签（labels）来区分和组织数据，便于细粒度监控和灵活查询。
 		- **可扩展性**：通过Exporters和Service Discovery机制，轻松集成多种服务和系统的监控。
 		- **社区支持**：拥有活跃的开源社区和丰富的生态，不断有新的Exporter和集成方案出现。
-
 	
-
+	---
+	
 * **Grafana**
 	* **简介**：一款开源的数据可视化和分析平台，它能够展示来自多种数据源（包括Prometheus）的时间序列数据，并提供强大的仪表板构建功能。Grafana以其美观的界面和高度可定制性闻名，广泛应用于监控系统、数据分析和业务智能领域。
 	* **在项目中的角色**： 与Prometheus结合时，Grafana在项目中扮演的角色主要包括：
@@ -882,11 +875,9 @@ JacksonObjectMapper对象映射器
 		* **告警通知渠道多样**：支持电子邮件、Slack、PagerDuty等多种通知渠道。
 		* **社区插件**：拥有庞大的插件市场，支持额外的数据可视化选项、数据处理函数等，极大丰富了功能。
 
-
+---
 
 ## 三、项目亮点
-
-
 
 ### 流程设计
 
@@ -895,6 +886,20 @@ JacksonObjectMapper对象映射器
 [如何实现比赛按规定的流程进行](#如何实现比赛按规定的流程进行)在项目介绍时已说明
 
 ![](https://big-event0618.oss-cn-beijing.aliyuncs.com/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-06-07%20163152.png)
+
+
+
+---
+
+
+
+### 基于poi库，实现下发账号、成绩导入
+
+为了便于下发账号和导入笔试成绩，我使用了poi库，按照规定的格式读取信息下发账号、导入成绩。
+
+下发账号请见[AdminService](#AdminService)下的1号标签
+
+导入成绩请见[HostService](#HostService)下的4号标签
 
 
 
@@ -966,19 +971,19 @@ JacksonObjectMapper对象映射器
 
 
 
-### 使用Prometheus+Grafana监控服务器各项指标
+### 使用Prometheus+Grafana监控系统性能指标
 
-为了避免和减少服务器宕机的造成损失，我入门了Prometheus+Grafana，用他们监控服务器各项指标，当指标异常时，及时发送告警通知相关人员。
+为了避免和减少服务器宕机造成的损失，我入门了Prometheus+Grafana，用他们监控系统和资源性能指标。由于Prometheus要学很多东西，我没有那么多时间，我就只实现了监控功能，未实现检测告警功能。
 
 
 
 ## 四、学习心得
 
-
+---
 
 ### 新技术
 
-
+---
 
 #### SaToken
 
@@ -988,7 +993,7 @@ JacksonObjectMapper对象映射器
 
 这次的考核项目，我只用了SaToken的登录认证和角色鉴权（非常的方便），他还有好多令我好奇的功能等待着我去了解。希望学长能分享一下其他经常用到的功能。
 
-
+---
 
 ####  Websocket
 
@@ -1000,7 +1005,7 @@ JacksonObjectMapper对象映射器
 
 websocket的用处远不止此，我迫切地想学习他的其他用处，但奈何时间不均须。暑假有机会再学习其他用处吧。
 
-
+---
 
 #### RabbitMQ
 
@@ -1010,13 +1015,17 @@ RabbitMQ的入门学习倒是非常的顺利，除了配置环境花了点时间
 
 当然RabbitMQ我也只是刚刚入门，还有好多功能等待着我去学习。毕竟学无止境嘛，不能满足于当下，与时俱进才是出路！！！
 
-
+---
 
 #### Prometheus+Grafana
 
-为了监控服务器及应用的各项指标，当系统指标异常时，及时发送告警通知相关人员，我入门了Prometheus和Grafana。
+为了监控系统、资源性能指标，当性能指标异常时，及时发送告警通知相关人员（未实现该功能），我入门了Prometheus和Grafana。
 
-这其中也遇到了不少困难。由于我查找到的那篇资料是介绍监控linux系统的（下载的exporter为node_exporter），于是我不得不再找一篇安装wmi exporter的资料并与之整合。最大的问题是要被监控的ip地址的填写，资料上演示的ip地址是以10开头的（我之前不知道这是本地ip地址），我就填写的localhost或127.0.0.1。结果就是连接不上，我以为是我配置写错了，检查半天也没找出原因。只好在网上搜索别的资料，发现要填写本地ip地址，才能连接的上。
+这其中也遇到了不少困难。
+
+1. 由于我查找到的那篇资料是介绍监控linux系统的（下载的exporter为node_exporter），于是我不得不再找一篇安装wmi exporter的资料并与之整合。
+2. 被监控的ip地址的填写：资料上演示的ip地址是以10开头的（我之前不知道这是本地ip地址），我就填写的localhost或127.0.0.1。结果就是连接不上，我以为是我配置写错了，检查半天也没找出原因。只好在网上搜索别的资料，发现要填写本地ip地址，才能连接的上。
+3. docker运行容器时，挂载的配置
 
 
 
@@ -1027,7 +1036,6 @@ RabbitMQ的入门学习倒是非常的顺利，除了配置环境花了点时间
 ### 不足
 
 1. **数据库建表考虑不周**：经常在编写业务逻辑时，更改表的字段
-
 2. **实体类命名杂乱**：有时候不知道该如何命名
 3. **项目经验不足**：有些结构不是很规范、不知道哪里需要解耦
 
