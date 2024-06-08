@@ -14,7 +14,7 @@
             <if test="username!=null">username=#{username},</if>
             <if test="password!=null">password=#{password},</if>
             <if test="nickname!=null">nickname=#{nickname},</if>
-            <if test="rid!=0">rid=#{rid},</if>
+            <if test="rid!=0 and rid!=null">rid=#{rid},</if>
             <if test="avatar!=null">avatar=#{avatar},</if>
             <if test="enabled!=null">enabled=#{enabled},</if>
             <if test="usernameModifiable!=null">username_modifiable=#{usernameModifiable}</if>

@@ -51,6 +51,11 @@ public class CheckQueryProcessAspect {
 
         String value = getValue(joinPoint);
         String[] processStep = Process.PROCESS_STEP;
+
+        // 已经完赛
+        if(processStep[10].equals(value))
+            throw new ProcessStatusException(ErrorMessage.PROCESS_STATUS_ERROR);
+
         // <flag时查询到，表示未到能查询的流程
         for (int i = 0; i < flag; i++)
             if (value.equals(processStep[i]))

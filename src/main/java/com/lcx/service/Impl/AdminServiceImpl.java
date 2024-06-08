@@ -84,7 +84,7 @@ public class AdminServiceImpl implements AdminService {
                 int rid = ConvertUtil.parseRoleNum(r);
                 for (int j = 1; j <= inSheet.getLastRowNum(); j++) {
                     XSSFRow inRow = inSheet.getRow(j);
-                    if (inRow == null) break;
+                    if(inRow.getLastCellNum()!=5) break;
                     XSSFRow outRow = outSheet.createRow(j);
                     String IDCard = inRow.getCell(1).getStringCellValue();
                     UserInfo userInfo = userInfoMapper.getByIDCard(IDCard);
@@ -129,7 +129,7 @@ public class AdminServiceImpl implements AdminService {
                         // 设置角色
                         user.setRid(rid);
                         // 重置密码
-                        if (inRow.getCell(4).getBooleanCellValue()) {
+                        if (Objects.equals(inRow.getCell(4).getStringCellValue(),"是")) {
                             String password = RandomStringUtils.length(8);
                             user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
                             outRow.createCell(2).setCellValue(password);
@@ -176,6 +176,7 @@ public class AdminServiceImpl implements AdminService {
             int role = Role.SCHOOL;
             for (int i = 1; i <= inSheet.getLastRowNum(); i++) {
                 XSSFRow inRow = inSheet.getRow(i);
+                if(inRow.getLastCellNum()!=3) break;
                 XSSFRow outRow = outSheet.createRow(i);
 
                 //学校信息表

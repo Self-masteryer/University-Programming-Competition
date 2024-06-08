@@ -8,7 +8,7 @@
         <set>
             <if test="name!=null and name!='' ">name=#{name},</if>
             <if test="group!=null">`group`=#{group},</if>
-            <if test="zone!=null">zone=#{zone},</if>
+            <if test="zone!=null">zone=#{zone}</if>
         </set>
         where uid=#{uid};
     </update>

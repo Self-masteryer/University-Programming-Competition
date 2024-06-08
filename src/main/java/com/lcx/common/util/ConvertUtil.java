@@ -60,7 +60,7 @@ public class ConvertUtil {
             case Zone.CENTRAL -> "C";
             case Zone.EAST -> "E";
             case Zone.NATIONAL -> "N";
-            default -> null;
+            default -> "";
         };
     }
 
@@ -83,7 +83,7 @@ public class ConvertUtil {
         return switch (group) {
             case Group.BK -> "BK";
             case Group.GZ -> "GZ";
-            default -> null;
+            default -> "";
         };
     }
 

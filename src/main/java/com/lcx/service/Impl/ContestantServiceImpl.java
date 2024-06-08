@@ -1,8 +1,13 @@
 package com.lcx.service.Impl;
 
+import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.ErrorMessage;
+import com.lcx.common.constant.Group;
+import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Time;
+import com.lcx.common.constant.Zone;
+import com.lcx.common.exception.BaseException;
 import com.lcx.common.exception.RoleVerificationException;
 import com.lcx.common.exception.time.TimePeriodErrorException;
 import com.lcx.common.util.RedisUtil;
@@ -50,6 +55,12 @@ public class ContestantServiceImpl implements ContestantService {
     @Override
     @Transactional
     public void waiverNatCompQual() {
+        // 检验区赛是否结束
+        SaSession saSession = StpUtil.getSession();
+        String key=RedisUtil.getProcessKey(saSession.getString(Group.GROUP),saSession.getString(Zone.ZONE));
+        if(!Process.PROCESS_STEP[10].equals(stringRedisTemplate.opsForValue().get(key)))
+            throw new BaseException();
+
         // 校验是否为国赛选手
         Contestant contestant = contestantMapper.getByUid(StpUtil.getLoginIdAsInt());
         if(contestant==null)
@@ -72,7 +83,7 @@ public class ContestantServiceImpl implements ContestantService {
         userInfoMapper.update(userInfo);
 
         // 从redis中获得顺延递补的选手排名
-        String key = RedisUtil.getNextNatContestantKey(contestant.getGroup(), contestant.getZone());
+        key = RedisUtil.getNextNatContestantKey(contestant.getGroup(), contestant.getZone());
         String next = stringRedisTemplate.opsForValue().get(key)
                 ==null?"6":stringRedisTemplate.opsForValue().get(key);
         //  保存下一名排名序号
