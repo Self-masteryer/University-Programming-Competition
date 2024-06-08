@@ -129,7 +129,7 @@
 
 ### 重要文件
 
-
+---
 
 #### controller
 
@@ -237,7 +237,7 @@ MYSQL数据：
 
 #### Service
 
-
+---
 
 ##### AdminService
 
@@ -605,7 +605,7 @@ JacksonObjectMapper对象映射器
 
 * **CheckProcessAspect**：
 
-  1. Before：检验调用接口时是否符合当前进程
+  * Before：检验调用接口时是否符合当前进程
   	1. 获取方法签名
   	2. 获得注解参数（process、step）
   	3. 判断是管理员还是主持人或评委（判断group、zone来源）
@@ -613,8 +613,8 @@ JacksonObjectMapper对象映射器
   	5. 匹配redis中的进程
   	    * 匹配：放行
         * 不匹配：拦截
-  2. After：自动跳转到下一step（步骤）
-  
+
+  * After：自动跳转到下一step（步骤）
      1. 判断是否为打分环节，是则return
      2. 获取下一步
      3. 更新进程信息
@@ -975,7 +975,7 @@ JacksonObjectMapper对象映射器
 
 为了避免和减少服务器宕机造成的损失，我入门了Prometheus+Grafana，用他们监控系统和资源性能指标。由于Prometheus要学很多东西，我没有那么多时间，我就只实现了监控功能，未实现检测告警功能。
 
-
+---
 
 ## 四、学习心得
 
