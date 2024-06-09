@@ -118,4 +118,5 @@ public class AdminController {
     public Result<List<FinalSingleScore>> queryQAndAScore(ScoreQuery scoreQuery) {
         return Result.success(adminService.queryqAndAScore(scoreQuery));
     }
+
 }

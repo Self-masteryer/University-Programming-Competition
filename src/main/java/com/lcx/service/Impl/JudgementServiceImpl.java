@@ -108,7 +108,8 @@ public class JudgementServiceImpl implements JudgementService {
             rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.RATE_ROUTE,scoreJson);
         }
 
-        synchronized (JudgementServiceImpl.class) {
+        // 保证线程安全
+        synchronized (this) {
 
             // 已打分评委数量加一
             String key = RedisUtil.getRateTimesKey(uid);// 几位评委已打分
@@ -206,7 +207,8 @@ public class JudgementServiceImpl implements JudgementService {
             rabbitTemplate.convertAndSend(RabbitMQ.TOPIC_EXCHANGE,RabbitMQ.RATE_ROUTE,scoreJson);
         }
 
-        synchronized (JudgementServiceImpl.class) {
+        // 保证线程安全
+        synchronized (this) {
 
             // 已打分评委数量加一
             String key = RedisUtil.getRateTimesKey(uid);// 几位评委已打分

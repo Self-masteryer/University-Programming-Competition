@@ -56,5 +56,6 @@ public class AliOssUtil {
         log.info("文件上传到:{}", stringBuilder.toString());
 
         return stringBuilder.toString();
+
     }
 }

@@ -30,4 +30,5 @@ public class GlobalExceptionHandler {
             return Result.error(StringUtils.hasLength(msg) ? msg : "操作失败");
         }
     }
+
 }

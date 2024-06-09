@@ -28,7 +28,6 @@ public class GroupDrawCallable implements Callable<List<SignGroup>> {
         // 分组信息
         List<SignGroup> signGroups = groupDraw(students);
 
-
         // 更新成绩信息
         for (SignGroup signGroup : signGroups) {
             scoreInfoMapper.updateSignNumByUid(signGroup.getA().getUid(), "A" + signGroup.getSignNum());

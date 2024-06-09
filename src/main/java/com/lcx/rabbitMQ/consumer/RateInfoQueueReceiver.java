@@ -28,4 +28,5 @@ public class RateInfoQueueReceiver {
         if(Objects.equals(value, Supervise.SUPERVISE_OPEN))
             superviseRateWebSocketHandler.sendRateInfo(message);
     }
+
 }

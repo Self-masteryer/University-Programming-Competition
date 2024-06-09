@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -74,6 +75,14 @@ public class HostController {
             seatTable = hostService.seatDraw(compInfoDTO.getGroup(), compInfoDTO.getZone());
 
         return Result.success(seatTable);
+    }
+
+    // 获得上传笔试成绩excel模板
+    @GetMapping("/getExcelTemplate")
+    @CheckProcess(process = Process.WRITTEN, step = Step.POST_WRITTEN_SCORE)
+    public Result getExcelTemplate(HttpServletResponse response) throws IOException {
+        hostService.getExcelTemplate(response);
+        return Result.success();
     }
 
     // 通过excel上传笔试成绩

@@ -20,10 +20,10 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -399,4 +399,28 @@ public class HostServiceImpl implements HostService {
         return scoreInfoMapper.getQAndAScoreByUid(uid);
     }
 
+    @Override
+    public void getExcelTemplate(HttpServletResponse response){
+        XSSFWorkbook excelTemplate = new XSSFWorkbook();
+        XSSFSheet sheet = excelTemplate.createSheet("笔试成绩");
+
+        XSSFRow row = sheet.createRow(0);
+        row.createCell(0).setCellValue("姓名");
+        row.createCell(1).setCellValue("身份证号码");
+        row.createCell(2).setCellValue("参数组别");
+        row.createCell(3).setCellValue("赛区");
+        row.createCell(4).setCellValue("座位号");
+        row.createCell(5).setCellValue("分数");
+
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-Disposition", "attachment; filename=template.xlsx");
+        ServletOutputStream out = null;
+        try {
+            out = response.getOutputStream();
+            excelTemplate.write(out);
+            excelTemplate.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

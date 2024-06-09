@@ -7,6 +7,7 @@ import com.lcx.pojo.VO.SignGroup;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface HostService {
@@ -30,4 +31,6 @@ public interface HostService {
     GroupScore getGroupScore(int aUid, int bUid);
 
     FinalSingleScore getQAndAScore(int uid);
+
+    void getExcelTemplate(HttpServletResponse response) throws IOException;
 }

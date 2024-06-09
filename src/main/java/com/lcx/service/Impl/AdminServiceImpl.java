@@ -68,13 +68,13 @@ public class AdminServiceImpl implements AdminService {
             InputStream in = file.getInputStream();
             XSSFWorkbook inExcel = new XSSFWorkbook(in);
             XSSFWorkbook outExcel = new XSSFWorkbook();
-            //sheet
+            // sheet
             for (int i = 0; i < inExcel.getNumberOfSheets(); i++) {
-                //创建数据输入sheet
+                // 创建数据输入sheet
                 XSSFSheet inSheet = inExcel.getSheetAt(i);
                 if(inSheet==null) break;
                 String r = inSheet.getSheetName();
-                //创建账号输出sheet
+                // 创建账号输出sheet
                 XSSFSheet outSheet = outExcel.createSheet(r);
                 XSSFRow outRow1 = outSheet.createRow(0);
                 outRow1.createCell(0).setCellValue("姓名");
@@ -84,21 +84,22 @@ public class AdminServiceImpl implements AdminService {
                 int rid = ConvertUtil.parseRoleNum(r);
                 for (int j = 1; j <= inSheet.getLastRowNum(); j++) {
                     XSSFRow inRow = inSheet.getRow(j);
-                    if(inRow.getLastCellNum()!=5) break;
+                    // 缺少必填数据
+                    if(inRow.getLastCellNum()<4) continue;
                     XSSFRow outRow = outSheet.createRow(j);
                     String IDCard = inRow.getCell(1).getStringCellValue();
                     UserInfo userInfo = userInfoMapper.getByIDCard(IDCard);
 
-                    //账号不存在
+                    // 账号不存在
                     if (userInfo == null) {
-                        //身份信息表
+                        // 身份信息
                         userInfo = new UserInfo();
                         userInfo.setIdCard(IDCard);//身份证
                         userInfo.setName(inRow.getCell(0).getStringCellValue());//姓名
                         userInfo.setGroup(ConvertUtil.parseGroupSimStr(inRow.getCell(2).getStringCellValue()));//组别
                         userInfo.setZone(ConvertUtil.parseZoneSimStr(inRow.getCell(3).getStringCellValue()));//赛区
 
-                        //用户
+                        //账号
                         User user = new User();
                         user.setUsername(RandomStringUtils.length(8));
                         String password = RandomStringUtils.length(8);
@@ -128,8 +129,8 @@ public class AdminServiceImpl implements AdminService {
                         user.setUsernameModifiable(1);
                         // 设置角色
                         user.setRid(rid);
-                        // 重置密码
-                        if (Objects.equals(inRow.getCell(4).getStringCellValue(),"是")) {
+                        // 重置密码（有填写才进程判断）
+                        if (inRow.getLastCellNum()==5&&Objects.equals(inRow.getCell(4).getStringCellValue(),"是")) {
                             String password = RandomStringUtils.length(8);
                             user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
                             outRow.createCell(2).setCellValue(password);
@@ -144,7 +145,7 @@ public class AdminServiceImpl implements AdminService {
             }
             //传回账号数据
             response.setContentType("application/vnd.ms-excel");
-            response.setHeader("Content-Disposition", "attachment; filename=userAccount.xls");
+            response.setHeader("Content-Disposition", "attachment; filename=userAccount.xlsx");
             ServletOutputStream out = response.getOutputStream();
             outExcel.write(out);
             //关闭资源
@@ -208,7 +209,7 @@ public class AdminServiceImpl implements AdminService {
             }
             //传回账号数据
             response.setContentType("application/vnd.ms-excel");
-            response.setHeader("Content-Disposition", "attachment; filename=schoolAccount.xls");
+            response.setHeader("Content-Disposition", "attachment; filename=schoolAccount.xlsx");
             ServletOutputStream out = response.getOutputStream();
             outExcel.write(out);
             //关闭资源

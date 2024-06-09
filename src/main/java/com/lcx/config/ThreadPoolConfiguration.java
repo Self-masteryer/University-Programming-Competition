@@ -18,4 +18,5 @@ public class ThreadPoolConfiguration {
         executor.initialize();
         return executor;
     }
+
 }
