@@ -1,7 +1,7 @@
 package com.lcx.handler;
 
 import com.lcx.common.constant.Supervise;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;

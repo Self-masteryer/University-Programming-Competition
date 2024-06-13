@@ -1,7 +1,7 @@
 package com.lcx.common.exception;
 
-public class NetworkException extends BaseException{
-    public NetworkException() {}
+public class NetworkException extends RuntimeException {
+
     public NetworkException(String message) {
         super(message);
     }

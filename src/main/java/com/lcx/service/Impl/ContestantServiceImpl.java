@@ -7,10 +7,10 @@ import com.lcx.common.constant.Group;
 import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Time;
 import com.lcx.common.constant.Zone;
-import com.lcx.common.exception.BaseException;
 import com.lcx.common.exception.RoleVerificationException;
+import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.exception.time.TimePeriodErrorException;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.PreScoreMapper;
 import com.lcx.mapper.ScoreInfoMapper;
@@ -59,7 +59,7 @@ public class ContestantServiceImpl implements ContestantService {
         SaSession saSession = StpUtil.getSession();
         String key=RedisUtil.getProcessKey(saSession.getString(Group.GROUP),saSession.getString(Zone.ZONE));
         if(!Process.PROCESS_STEP[10].equals(stringRedisTemplate.opsForValue().get(key)))
-            throw new BaseException();
+            throw new ProcessStatusException(ErrorMessage.PROCESS_STATUS_ERROR);
 
         // 校验是否为国赛选手
         Contestant contestant = contestantMapper.getByUid(StpUtil.getLoginIdAsInt());
@@ -97,6 +97,7 @@ public class ContestantServiceImpl implements ContestantService {
 
     // 删除未晋级选手
     @Override
+    @Transactional
     public void deleteContestant(String group, String zone) {
         List<Integer> uidList = preScoreMapper.getUnqualUidList(group,zone);
         for (Integer uid : uidList)

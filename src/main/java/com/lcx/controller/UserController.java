@@ -3,7 +3,7 @@ package com.lcx.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.ErrorMessage;
 import com.lcx.common.result.Result;
-import com.lcx.common.util.AliOssUtil;
+import com.lcx.common.utils.AliOssUtil;
 import com.lcx.pojo.DTO.ChangePwdDTO;
 import com.lcx.pojo.Entity.AccountInfo;
 import com.lcx.pojo.DTO.ResetAccountDTO;

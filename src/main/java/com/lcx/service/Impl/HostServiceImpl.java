@@ -7,8 +7,8 @@ import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.exception.process.StartCompetitionException;
-import com.lcx.common.util.ConvertUtil;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.ConvertUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.Entity.*;
 import com.lcx.pojo.VO.*;
@@ -24,6 +24,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -210,6 +211,7 @@ public class HostServiceImpl implements HostService {
     // 分组抽签
     @Override
     @Transactional
+    //@Async("asyncServiceExecutor")
     public List<SignGroup> groupDraw(String group, String zone) {
         List<Student> students = contestantMapper.getStudentListByGroupAndZone(group, zone);
         // 分组信息
@@ -414,7 +416,7 @@ public class HostServiceImpl implements HostService {
 
         response.setContentType("application/vnd.ms-excel");
         response.setHeader("Content-Disposition", "attachment; filename=template.xlsx");
-        ServletOutputStream out = null;
+        ServletOutputStream out;
         try {
             out = response.getOutputStream();
             excelTemplate.write(out);

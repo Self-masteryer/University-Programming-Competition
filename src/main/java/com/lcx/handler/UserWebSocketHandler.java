@@ -4,7 +4,7 @@ package com.lcx.handler;
 import com.alibaba.fastjson2.JSON;
 import com.lcx.common.constant.RabbitMQ;
 import com.lcx.common.constant.Supervise;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.mapper.UserMapper;
 import com.lcx.pojo.DAO.StatusInfo;
 import jakarta.annotation.Resource;

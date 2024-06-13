@@ -2,7 +2,7 @@ package com.lcx.rabbitMQ.consumer;
 
 import com.lcx.common.constant.RabbitMQ;
 import com.lcx.common.constant.Supervise;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.handler.SuperviseStatusWebSocketHandler;
 import jakarta.annotation.Resource;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;

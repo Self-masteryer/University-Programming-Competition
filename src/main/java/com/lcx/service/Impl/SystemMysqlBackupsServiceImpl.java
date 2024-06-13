@@ -2,7 +2,6 @@ package com.lcx.service.Impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import com.lcx.common.exception.BaseException;
 import com.lcx.common.exception.FileException;
 import com.lcx.common.exception.NetworkException;
 import com.lcx.mapper.SystemMysqlBackupsMapper;

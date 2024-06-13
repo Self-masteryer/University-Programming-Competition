@@ -1,8 +1,7 @@
-package com.lcx.common.util;
+package com.lcx.common.utils;
 
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
-import com.lcx.common.exception.BaseException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -155,7 +154,7 @@ public class ConvertUtil {
         return switch (c){
             case 'A'->num-1;
             case 'B'->num;
-            default -> throw new BaseException();// 异常
+            default -> throw new RuntimeException();// 异常
         };
     }
 }

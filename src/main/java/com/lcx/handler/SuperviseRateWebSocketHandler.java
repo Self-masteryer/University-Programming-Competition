@@ -1,7 +1,7 @@
 package com.lcx.handler;
 
 import com.lcx.common.constant.Supervise;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,7 +13,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 
 //  实时向管理员推送用户状态改变信息
 @Slf4j

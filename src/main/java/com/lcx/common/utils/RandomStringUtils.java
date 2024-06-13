@@ -1,4 +1,4 @@
-package com.lcx.common.util;
+package com.lcx.common.utils;
 
 import java.security.SecureRandom;
 

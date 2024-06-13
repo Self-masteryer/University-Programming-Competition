@@ -6,7 +6,7 @@ import com.github.pagehelper.PageHelper;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.result.PageResult;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DAO.ScoreDAO;
 import com.lcx.pojo.DTO.PreScorePageQuery;
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ScoreServiceImpl implements ScoreService {
@@ -48,6 +47,7 @@ public class ScoreServiceImpl implements ScoreService {
 
     // 添加往届成绩
     @Override
+    @Transactional
     public void addPreScore(String group, String zone) {
         List<ScoreInfo> scoreInfoList = scoreInfoMapper.getListByGroupAndZone(group,zone);
         scoreInfoList.sort(Comparator.comparingDouble(ScoreInfo::getFinalScore).reversed());
@@ -78,6 +78,7 @@ public class ScoreServiceImpl implements ScoreService {
 
     // 计算最终成绩
     @Override
+    @Transactional
     public void calculateFinalScore(String group, String zone) {
         List<ScoreDAO> scoreDAOList = scoreInfoMapper.getScoreDAOByUid(group, zone);
         for (ScoreDAO scoreDAO : scoreDAOList) {
@@ -91,7 +92,6 @@ public class ScoreServiceImpl implements ScoreService {
 
     // 查询学生成绩
     @Override
-    @Transactional
     public PageResult pageQueryStudentScore(StudentScorePageQuery studentScorePageQuery) {
         PageHelper.startPage(studentScorePageQuery.getPageNo(), studentScorePageQuery.getPageSize());
         Page<StudentScore> page = studentScoreMapper.pageQuery(studentScorePageQuery);
@@ -144,7 +144,6 @@ public class ScoreServiceImpl implements ScoreService {
 
     // 查询笔试成绩
     @Override
-    @Transactional
     public SingleScoreVO getWrittenScore(int uid) {
         return writtenScoreMapper.getVOByUid(uid);
     }

@@ -2,7 +2,7 @@ package com.lcx.config;
 
 
 import com.lcx.common.properties.AliOssProperties;
-import com.lcx.common.util.AliOssUtil;
+import com.lcx.common.utils.AliOssUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

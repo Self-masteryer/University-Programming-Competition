@@ -27,15 +27,15 @@ public class Result<T> implements Serializable {
         return result;
     }
 
-    public static <T> Result<T> success(T object) {
+    public static <T> Result<T> success(T data) {
         Result<T> result = new Result<T>();
-        result.data = object;
+        result.data = data;
         result.code = OK;
         return result;
     }
 
-    public static <T> Result success(T object, String msg) {
-        Result result = success(object);
+    public static <T> Result success(T data, String msg) {
+        Result result = success(data);
         result.msg = msg;
         return result;
     }
@@ -47,4 +47,9 @@ public class Result<T> implements Serializable {
         return result;
     }
 
+    public static <T> Result error(T data, String msg) {
+        Result result = error(msg);
+        result.data=data;
+        return result;
+    }
 }

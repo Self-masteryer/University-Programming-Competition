@@ -9,7 +9,7 @@ import com.lcx.common.exception.account.PasswordException;
 import com.lcx.common.exception.account.UsernameExistsException;
 import com.lcx.common.exception.account.UsernameModifiableException;
 import com.lcx.common.exception.time.TimePeriodErrorException;
-import com.lcx.common.util.RandomStringUtils;
+import com.lcx.common.utils.RandomStringUtils;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.SchoolMapper;
 import com.lcx.mapper.UserInfoMapper;

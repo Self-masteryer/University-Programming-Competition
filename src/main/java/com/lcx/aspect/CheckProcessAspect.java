@@ -6,7 +6,7 @@ import com.lcx.annotation.CheckProcess;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.process.ProcessStatusException;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.pojo.DTO.CompInfoDTO;
 import com.lcx.taskSchedule.AutoBackupsService;
 import jakarta.annotation.Resource;

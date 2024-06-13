@@ -32,14 +32,14 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
                 .addInterceptors(new AdminWebSocketHandshakeInterceptor())
                 .setAllowedOrigins("*");
 
-        // 注册user端点
-        registry.addHandler(userWebSocketHandler, "/user")
-                .addInterceptors(new UserWebsocketHandshakeInterceptor())
-                .setAllowedOrigins("*");
-
         // 注册superviseRate端点
         registry.addHandler(superviseRateWebSocketHandler, "/superviseRate")
                 .addInterceptors(new AdminWebSocketHandshakeInterceptor())
+                .setAllowedOrigins("*");
+
+        // 注册user端点
+        registry.addHandler(userWebSocketHandler, "/user")
+                .addInterceptors(new UserWebsocketHandshakeInterceptor())
                 .setAllowedOrigins("*");
 
     }

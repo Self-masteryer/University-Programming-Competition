@@ -7,8 +7,8 @@ import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.RateException;
 import com.lcx.common.exception.SignNumOutOfBoundException;
-import com.lcx.common.util.ConvertUtil;
-import com.lcx.common.util.RedisUtil;
+import com.lcx.common.utils.ConvertUtil;
+import com.lcx.common.utils.RedisUtil;
 import com.lcx.mapper.*;
 import com.lcx.pojo.DTO.ScoreDTO;
 import com.lcx.pojo.Entity.*;
@@ -50,7 +50,6 @@ public class JudgementServiceImpl implements JudgementService {
     private AutoBackupsService autoBackupsService;
 
     @Override
-    @Transactional
     public SignGroup getSignGroup(int signNum) {
         // 查询范围异常
         if (signNum < 1 || signNum > 15)
@@ -65,7 +64,6 @@ public class JudgementServiceImpl implements JudgementService {
     }
 
     @Override
-    @Transactional
     public Student getContestant(int num) {
         if (num < 1 || num > 30)
             throw new SignNumOutOfBoundException(ErrorMessage.SIGN_NUM_OUT_OF_BOUND);
