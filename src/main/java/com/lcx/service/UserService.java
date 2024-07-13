@@ -1,8 +1,12 @@
 package com.lcx.service;
 
-import com.lcx.pojo.DTO.*;
-import com.lcx.pojo.Entity.AccountInfo;
-import com.lcx.pojo.VO.SignUpVO;
+
+import com.lcx.domain.DTO.ChangePwdDTO;
+import com.lcx.domain.DTO.ResetAccountDTO;
+import com.lcx.domain.DTO.SignUpDTO;
+import com.lcx.domain.DTO.UserLoginDTO;
+import com.lcx.domain.Entity.AccountInfo;
+import com.lcx.domain.VO.SignUpVO;
 
 public interface UserService {
 

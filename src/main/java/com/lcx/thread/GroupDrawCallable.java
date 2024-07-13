@@ -1,9 +1,9 @@
 package com.lcx.thread;
 
+import com.lcx.domain.Entity.Student;
+import com.lcx.domain.VO.SignGroup;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.ScoreInfoMapper;
-import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.SignGroup;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -23,7 +23,7 @@ public class GroupDrawCallable implements Callable<List<SignGroup>> {
     }
 
     @Override
-    public List<SignGroup> call() throws Exception {
+    public List<SignGroup> call(){
         List<Student> students = contestantMapper.getStudentListByGroupAndZone(group, zone);
         // 分组信息
         List<SignGroup> signGroups = groupDraw(students);

@@ -8,8 +8,9 @@ import com.lcx.common.constant.Process;
 import com.lcx.common.properties.MysqlProperties;
 import com.lcx.common.utils.ConvertUtil;
 import com.lcx.common.utils.RedisUtil;
+import com.lcx.domain.DTO.CompInfoDTO;
 import com.lcx.mapper.ContestantMapper;
-import com.lcx.pojo.DTO.CompInfoDTO;
+
 import com.lcx.service.AdminService;
 import com.lcx.service.ContestantService;
 import com.lcx.service.ScoreService;

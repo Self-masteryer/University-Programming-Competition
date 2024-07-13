@@ -1,8 +1,9 @@
 package com.lcx.service;
 
 
-import com.lcx.pojo.Entity.SystemMysqlBackups;
-import org.apache.ibatis.annotations.Select;
+
+import com.lcx.domain.Entity.SystemMysqlBackups;
+
 
 import java.util.List;
 

@@ -1,6 +1,7 @@
 package com.lcx.mapper;
 
-import com.lcx.pojo.Entity.School;
+
+import com.lcx.domain.Entity.School;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;

@@ -7,16 +7,17 @@ import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.result.PageResult;
 import com.lcx.common.utils.RedisUtil;
+import com.lcx.domain.DAO.ScoreDAO;
+import com.lcx.domain.DTO.PreScorePageQuery;
+import com.lcx.domain.DTO.StudentScorePageQuery;
+import com.lcx.domain.Entity.PreScore;
+import com.lcx.domain.Entity.ScoreInfo;
+import com.lcx.domain.Entity.StudentScore;
+import com.lcx.domain.VO.PreScoreVO;
+import com.lcx.domain.VO.SingleScoreVO;
+import com.lcx.domain.VO.GradeVO;
 import com.lcx.mapper.*;
-import com.lcx.pojo.DAO.ScoreDAO;
-import com.lcx.pojo.DTO.PreScorePageQuery;
-import com.lcx.pojo.DTO.StudentScorePageQuery;
-import com.lcx.pojo.Entity.PreScore;
-import com.lcx.pojo.Entity.ScoreInfo;
-import com.lcx.pojo.Entity.StudentScore;
-import com.lcx.pojo.VO.PreScoreVO;
-import com.lcx.pojo.VO.GrageVO;
-import com.lcx.pojo.VO.SingleScoreVO;
+
 import com.lcx.service.ScoreService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
@@ -109,15 +110,15 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     @Transactional
     public void addStudentScore(String group, String zone) {
-        List<GrageVO> scoreInfoList = contestantMapper
+        List<GradeVO> scoreInfoList = contestantMapper
                 .getScoreVoListByGroupAndZone(group, zone);
-        scoreInfoList.sort(Comparator.comparingDouble(GrageVO::getFinalScore).reversed());
+        scoreInfoList.sort(Comparator.comparingDouble(GradeVO::getFinalScore).reversed());
 
         int session = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get("session")));
         for (int i = 0; i < 5; i++) {
-            GrageVO grageVo = scoreInfoList.get(i);
-            StudentScore studentScore = StudentScore.builder().name(grageVo.getName()).idCard(grageVo.getIdCard())
-                    .school(grageVo.getSchool()).session(session).score(grageVo.getFinalScore()).build();
+            GradeVO gradeVo = scoreInfoList.get(i);
+            StudentScore studentScore = StudentScore.builder().name(gradeVo.getName()).idCard(gradeVo.getIdCard())
+                    .school(gradeVo.getSchool()).session(session).score(gradeVo.getFinalScore()).build();
             if(Objects.equals(stringRedisTemplate.opsForValue().get(RedisUtil.COMPETITION), Process.DISTRICT)){
                 if (i < 2) studentScore.setPrize(Prize.PROVINCIAL_FIRST_PRIZE);
                 else studentScore.setPrize(Prize.PROVINCIAL_SECOND_PRIZE);

@@ -1,11 +1,10 @@
 package com.lcx.service;
 
 import com.lcx.common.result.PageResult;
-import com.lcx.pojo.DTO.PreScorePageQuery;
-import com.lcx.pojo.DTO.StudentScorePageQuery;
-import com.lcx.pojo.VO.PreScoreVO;
-import com.lcx.pojo.VO.SingleScoreVO;
-import org.springframework.transaction.annotation.Transactional;
+import com.lcx.domain.DTO.PreScorePageQuery;
+import com.lcx.domain.DTO.StudentScorePageQuery;
+import com.lcx.domain.VO.PreScoreVO;
+import com.lcx.domain.VO.SingleScoreVO;
 
 import java.util.List;
 

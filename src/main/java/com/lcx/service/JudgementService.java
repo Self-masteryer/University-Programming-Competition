@@ -1,8 +1,9 @@
 package com.lcx.service;
 
-import com.lcx.pojo.DTO.ScoreDTO;
-import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.SignGroup;
+
+import com.lcx.domain.DTO.ScoreDTO;
+import com.lcx.domain.Entity.Student;
+import com.lcx.domain.VO.SignGroup;
 
 public interface JudgementService {
 

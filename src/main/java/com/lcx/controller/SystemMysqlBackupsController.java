@@ -3,7 +3,7 @@ package com.lcx.controller;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.lcx.common.properties.MysqlProperties;
 import com.lcx.common.result.Result;
-import com.lcx.pojo.Entity.SystemMysqlBackups;
+import com.lcx.domain.Entity.SystemMysqlBackups;
 import com.lcx.service.SystemMysqlBackupsService;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;

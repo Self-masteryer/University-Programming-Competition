@@ -1,10 +1,11 @@
 package com.lcx.mapper;
 
+
 import com.github.pagehelper.Page;
-import com.lcx.pojo.DTO.PreScorePageQuery;
-import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.Entity.PreScore;
-import com.lcx.pojo.VO.PreScoreVO;
+import com.lcx.domain.DTO.PreScorePageQuery;
+import com.lcx.domain.Entity.Contestant;
+import com.lcx.domain.Entity.PreScore;
+import com.lcx.domain.VO.PreScoreVO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;

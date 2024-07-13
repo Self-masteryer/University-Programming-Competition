@@ -1,8 +1,9 @@
 package com.lcx.mapper;
 
-import com.lcx.pojo.DTO.ScoreInfoQuery;
-import com.lcx.pojo.Entity.Score;
-import com.lcx.pojo.VO.SingeScoreInfo;
+
+import com.lcx.domain.DTO.ScoreInfoQuery;
+import com.lcx.domain.Entity.Score;
+import com.lcx.domain.VO.SingeScoreInfo;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;

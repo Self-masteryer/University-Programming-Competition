@@ -7,7 +7,7 @@ import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.utils.RedisUtil;
-import com.lcx.pojo.DTO.CompInfoDTO;
+import com.lcx.domain.DTO.CompInfoDTO;
 import jakarta.annotation.Resource;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;

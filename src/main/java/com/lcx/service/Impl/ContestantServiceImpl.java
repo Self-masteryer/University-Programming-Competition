@@ -11,12 +11,13 @@ import com.lcx.common.exception.RoleVerificationException;
 import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.exception.time.TimePeriodErrorException;
 import com.lcx.common.utils.RedisUtil;
+import com.lcx.domain.Entity.Contestant;
+import com.lcx.domain.Entity.UserInfo;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.PreScoreMapper;
 import com.lcx.mapper.ScoreInfoMapper;
 import com.lcx.mapper.UserInfoMapper;
-import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.Entity.UserInfo;
+
 import com.lcx.service.ContestantService;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;

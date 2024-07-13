@@ -1,10 +1,11 @@
 package com.lcx.mapper;
 
 import com.github.pagehelper.Page;
-import com.lcx.pojo.DTO.StatusPageQuery;
-import com.lcx.pojo.Entity.AccountInfo;
-import com.lcx.pojo.Entity.User;
-import com.lcx.pojo.VO.StatusVO;
+
+import com.lcx.domain.DTO.StatusPageQuery;
+import com.lcx.domain.Entity.AccountInfo;
+import com.lcx.domain.Entity.User;
+import com.lcx.domain.VO.StatusVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;

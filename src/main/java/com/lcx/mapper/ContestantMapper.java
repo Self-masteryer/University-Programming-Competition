@@ -1,9 +1,9 @@
 package com.lcx.mapper;
 
-import com.lcx.pojo.DAO.SignInfoDAO;
-import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.GrageVO;
+import com.lcx.domain.DAO.SignInfoDAO;
+import com.lcx.domain.Entity.Contestant;
+import com.lcx.domain.Entity.Student;
+import com.lcx.domain.VO.GradeVO;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public interface ContestantMapper {
     @Select("select uid from contestant where `group`=#{group} and zone=#{zone}")
     List<Integer> getUidListByGroupAndZone(String group, String zone);
 
-    List<GrageVO> getScoreVoListByGroupAndZone(String group, String zone);
+    List<GradeVO> getScoreVoListByGroupAndZone(String group, String zone);
 
     void deleteByUidAndZone(Integer uid, String zone);
 

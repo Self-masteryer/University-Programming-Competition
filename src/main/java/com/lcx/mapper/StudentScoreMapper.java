@@ -1,8 +1,9 @@
 package com.lcx.mapper;
 
 import com.github.pagehelper.Page;
-import com.lcx.pojo.DTO.StudentScorePageQuery;
-import com.lcx.pojo.Entity.StudentScore;
+
+import com.lcx.domain.DTO.StudentScorePageQuery;
+import com.lcx.domain.Entity.StudentScore;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 

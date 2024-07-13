@@ -5,9 +5,10 @@ import com.lcx.annotation.CheckProcess;
 import com.lcx.common.constant.Process;
 import com.lcx.common.constant.Step;
 import com.lcx.common.result.Result;
-import com.lcx.pojo.DTO.ScoreDTO;
-import com.lcx.pojo.Entity.Student;
-import com.lcx.pojo.VO.SignGroup;
+
+import com.lcx.domain.DTO.ScoreDTO;
+import com.lcx.domain.Entity.Student;
+import com.lcx.domain.VO.SignGroup;
 import com.lcx.service.JudgementService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

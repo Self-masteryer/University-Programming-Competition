@@ -9,10 +9,17 @@ import com.lcx.common.exception.process.ProcessStatusException;
 import com.lcx.common.exception.process.StartCompetitionException;
 import com.lcx.common.utils.ConvertUtil;
 import com.lcx.common.utils.RedisUtil;
+import com.lcx.domain.Entity.Contestant;
+import com.lcx.domain.Entity.ScoreInfo;
+import com.lcx.domain.Entity.SingleScore;
+import com.lcx.domain.Entity.Student;
+import com.lcx.domain.VO.FinalSingleScore;
+import com.lcx.domain.VO.GroupScore;
+import com.lcx.domain.VO.GradeVO;
+import com.lcx.domain.VO.SeatInfo;
+import com.lcx.domain.VO.SignGroup;
 import com.lcx.mapper.*;
-import com.lcx.pojo.Entity.*;
-import com.lcx.pojo.VO.*;
-import com.lcx.pojo.VO.FinalSingleScore;
+
 import com.lcx.service.HostService;
 import com.lcx.taskSchedule.AutoBackupsService;
 import jakarta.annotation.Resource;
@@ -24,7 +31,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -186,7 +192,7 @@ public class HostServiceImpl implements HostService {
         // 查询成绩单
         List<SingleScore> scores = scoreInfoMapper.getWrittenScoreList(group, zone);
         // 按笔试成绩降序排序
-        scores.sort(Comparator.comparingInt(com.lcx.pojo.Entity.SingleScore::getScore).reversed());
+        scores.sort(Comparator.comparingInt(SingleScore::getScore).reversed());
 
         // 添加到written_score表
         for (int i = 0; i < scores.size(); i++) {
@@ -235,9 +241,9 @@ public class HostServiceImpl implements HostService {
     @Override
     @Transactional
     public void exportScoreToPdf(String group, String zone, HttpServletResponse response) {
-        List<GrageVO> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
+        List<GradeVO> scoreInfoList = contestantMapper.getScoreVoListByGroupAndZone(group, zone);
         // 降序排序
-        scoreInfoList.sort(Comparator.comparingDouble(GrageVO::getFinalScore).reversed());
+        scoreInfoList.sort(Comparator.comparingDouble(GradeVO::getFinalScore).reversed());
 
         // 区赛为true
         // 国赛为false
@@ -275,7 +281,7 @@ public class HostServiceImpl implements HostService {
             int i = 1;
             String key = "fill_";
             if(flag){
-                for (GrageVO score : scoreInfoList) {
+                for (GradeVO score : scoreInfoList) {
                     form.setField(key + i, score.getName());i++;
                     form.setField(key + i, group);i++;
                     form.setField(key + i, zone);i++;
@@ -286,7 +292,7 @@ public class HostServiceImpl implements HostService {
                     form.setField(key + i, String.valueOf(score.getFinalScore()));i++;
                 }
             }else{
-                for (GrageVO score : scoreInfoList) {
+                for (GradeVO score : scoreInfoList) {
                     form.setField(key + i, score.getName());i++;
                     form.setField(key + i, group);i++;
                     form.setField(key + i, zone);i++;

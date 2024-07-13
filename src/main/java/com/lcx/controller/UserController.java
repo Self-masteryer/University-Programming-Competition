@@ -4,11 +4,12 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.lcx.common.constant.ErrorMessage;
 import com.lcx.common.result.Result;
 import com.lcx.common.utils.AliOssUtil;
-import com.lcx.pojo.DTO.ChangePwdDTO;
-import com.lcx.pojo.Entity.AccountInfo;
-import com.lcx.pojo.DTO.ResetAccountDTO;
-import com.lcx.pojo.DTO.UserLoginDTO;
-import com.lcx.pojo.VO.PreScoreVO;
+
+import com.lcx.domain.DTO.ChangePwdDTO;
+import com.lcx.domain.DTO.ResetAccountDTO;
+import com.lcx.domain.DTO.UserLoginDTO;
+import com.lcx.domain.Entity.AccountInfo;
+import com.lcx.domain.VO.PreScoreVO;
 import com.lcx.service.ScoreService;
 import com.lcx.service.UserService;
 import jakarta.annotation.Resource;

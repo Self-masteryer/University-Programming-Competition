@@ -1,7 +1,8 @@
 package com.lcx.mapper;
 
-import com.lcx.pojo.Entity.SingleScore;
-import com.lcx.pojo.VO.SingleScoreVO;
+
+import com.lcx.domain.Entity.SingleScore;
+import com.lcx.domain.VO.SingleScoreVO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -9,7 +10,6 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface WrittenScoreMapper {
-
 
     @Insert("insert into written_score (uid,name, `group`, zone, seat_num, score, ranking)" +
             "value (#{uid},#{name},#{group},#{zone},#{seatNum},#{score},#{ranking})")

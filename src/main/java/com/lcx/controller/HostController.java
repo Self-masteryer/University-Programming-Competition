@@ -9,12 +9,12 @@ import com.lcx.annotation.CheckProcess;
 import com.lcx.common.constant.*;
 import com.lcx.common.constant.Process;
 import com.lcx.common.result.Result;
-import com.lcx.mapper.UserInfoMapper;
-import com.lcx.pojo.DTO.CompInfoDTO;
-import com.lcx.pojo.VO.FinalSingleScore;
-import com.lcx.pojo.VO.GroupScore;
-import com.lcx.pojo.VO.SeatInfo;
-import com.lcx.pojo.VO.SignGroup;
+import com.lcx.domain.DTO.CompInfoDTO;
+import com.lcx.domain.Entity.SingleScore;
+import com.lcx.domain.VO.FinalSingleScore;
+import com.lcx.domain.VO.GroupScore;
+import com.lcx.domain.VO.SeatInfo;
+import com.lcx.domain.VO.SignGroup;
 import com.lcx.service.HostService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -98,9 +98,9 @@ public class HostController {
     // 按笔试成绩筛选
     @PostMapping("/scoreFilter")
     @CheckProcess(process = Process.WRITTEN, step = Step.SCORE_FILTER)
-    public Result<List<com.lcx.pojo.Entity.SingleScore>> scoreFilter(@RequestBody CompInfoDTO compInfoDTO) {
+    public Result<List<SingleScore>> scoreFilter(@RequestBody CompInfoDTO compInfoDTO) {
         SaSession session = StpUtil.getSession();
-        List<com.lcx.pojo.Entity.SingleScore> scoreList;
+        List<SingleScore> scoreList;
 
         if (session.getInt(Role.ROLE) == Role.HOST)// 主持人
             scoreList = hostService.scoreFilter(session.getString(Group.GROUP), session.getString(Zone.ZONE));

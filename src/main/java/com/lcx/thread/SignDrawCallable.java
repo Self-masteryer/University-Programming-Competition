@@ -1,9 +1,10 @@
 package com.lcx.thread;
 
+import com.lcx.domain.Entity.Contestant;
+import com.lcx.domain.VO.SeatInfo;
 import com.lcx.mapper.ContestantMapper;
 import com.lcx.mapper.ScoreInfoMapper;
-import com.lcx.pojo.Entity.Contestant;
-import com.lcx.pojo.VO.SeatInfo;
+
 
 import java.util.ArrayList;
 import java.util.Collections;

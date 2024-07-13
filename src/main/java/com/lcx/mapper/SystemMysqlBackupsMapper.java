@@ -1,7 +1,8 @@
 package com.lcx.mapper;
 
-import com.lcx.pojo.DAO.BackupsFilePath;
-import com.lcx.pojo.Entity.SystemMysqlBackups;
+
+import com.lcx.domain.DAO.BackupsFilePath;
+import com.lcx.domain.Entity.SystemMysqlBackups;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

@@ -1,10 +1,11 @@
 package com.lcx.mapper;
 
-import com.lcx.pojo.DAO.ScoreDAO;
-import com.lcx.pojo.DTO.ScoreQuery;
-import com.lcx.pojo.Entity.ScoreInfo;
-import com.lcx.pojo.Entity.SingleScore;
-import com.lcx.pojo.VO.FinalSingleScore;
+
+import com.lcx.domain.DAO.ScoreDAO;
+import com.lcx.domain.DTO.ScoreQuery;
+import com.lcx.domain.Entity.ScoreInfo;
+import com.lcx.domain.Entity.SingleScore;
+import com.lcx.domain.VO.FinalSingleScore;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

@@ -1,8 +1,9 @@
 package com.lcx.taskSchedule;
 
 import com.lcx.common.properties.MysqlProperties;
+import com.lcx.domain.DAO.BackupsFilePath;
 import com.lcx.mapper.SystemMysqlBackupsMapper;
-import com.lcx.pojo.DAO.BackupsFilePath;
+
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

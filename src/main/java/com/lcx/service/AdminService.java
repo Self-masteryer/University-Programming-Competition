@@ -2,13 +2,14 @@ package com.lcx.service;
 
 
 import com.lcx.common.result.PageResult;
-import com.lcx.pojo.DTO.ScoreInfoQuery;
-import com.lcx.pojo.DTO.ScoreQuery;
-import com.lcx.pojo.DTO.TimePeriod;
-import com.lcx.pojo.DTO.StatusPageQuery;
-import com.lcx.pojo.VO.FinalSingleScore;
-import com.lcx.pojo.VO.ProcessVO;
-import com.lcx.pojo.VO.SingeScoreInfo;
+
+import com.lcx.domain.DTO.ScoreInfoQuery;
+import com.lcx.domain.DTO.ScoreQuery;
+import com.lcx.domain.DTO.StatusPageQuery;
+import com.lcx.domain.DTO.TimePeriod;
+import com.lcx.domain.VO.FinalSingleScore;
+import com.lcx.domain.VO.ProcessVO;
+import com.lcx.domain.VO.SingeScoreInfo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
